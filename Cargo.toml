@@ -1,0 +1,29 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/brightdate",
+    "crates/bdate",
+    "crates/btime",
+    "crates/buptime",
+    "crates/bcal",
+    "crates/bwatch",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+authors = ["Digital-Defiance"]
+license = "MIT"
+repository = "https://github.com/Digital-Defiance/brightdate-rust"
+homepage = "https://brightdate.brightchain.org"
+rust-version = "1.75"
+
+[workspace.dependencies]
+brightdate = { path = "crates/brightdate", version = "0.1.0" }
+chrono = { version = "0.4", features = ["serde"] }
+clap = { version = "4", features = ["derive", "color"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "1"
+assert_cmd = "2"
+predicates = "3"

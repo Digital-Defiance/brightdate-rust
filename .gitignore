@@ -1,0 +1,7 @@
+
+
+# Rust build output
+target/
+
+#Ignore vscode AI rules
+.github/instructions/codacy.instructions.md

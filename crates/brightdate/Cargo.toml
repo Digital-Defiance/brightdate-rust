@@ -1,0 +1,23 @@
+[package]
+name = "brightdate"
+description = "Universal Decimal Time System anchored at J2000.0 — a scientifically grounded, timezone-free time representation"
+keywords = ["time", "astronomy", "datetime", "j2000", "tai"]
+categories = ["date-and-time", "science"]
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+chrono = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+
+[dev-dependencies]
+
+[features]
+default = []

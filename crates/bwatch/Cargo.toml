@@ -1,0 +1,18 @@
+[package]
+name = "bwatch"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "bwatch"
+path = "src/main.rs"
+
+[dependencies]
+brightdate = { path = "../brightdate" }
+clap = { workspace = true }
+
+[dev-dependencies]
+assert_cmd = { workspace = true }
+predicates = { workspace = true }
