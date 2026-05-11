@@ -77,7 +77,82 @@ BrightDate ticks in exact SI seconds. Leap seconds exist only at UTC boundary co
 
 ---
 
-## Building
+## Companion Types
+
+BrightDate ships in three flavors so you can pick the right trade-off between ergonomics and precision. All three anchor on the same J2000.0 / TAI substrate — they only differ in how the value is stored.
+
+| Type | Representation | Precision | Range | Use when… |
+|------|----------------|-----------|-------|-----------|
+| **`BrightDate`** | `f64` decimal days since J2000.0 | ~190 ns in the current era; widens with magnitude | ±287,000 years from J2000 | The 99% case — math, astronomy, scheduling, logging, display. Sorts, diffs, and serializes natively. |
+| **`BrightInstant`** | `i64` TAI seconds + `u32` nanos since J2000.0 | **1 ns exactly, everywhere** | Effectively unlimited | You need nanosecond precision at any magnitude — distributed systems, GPS engineering, interplanetary mission timing. The rigorous companion to `BrightDate`. |
+| **`ExactBrightDate`** *(TypeScript only)* | `BigInt` picoseconds since J2000.0 | **1 ps exactly, everywhere** | Effectively unlimited | You must round-trip arbitrary Unix milliseconds bit-for-bit — blockchain consensus, archival storage, byte-identical reconstruction. |
+
+**Rust** ships `BrightDate` + `BrightInstant`. **TypeScript** ships all three. You can convert freely between them: store in the exact form at storage boundaries, compute in `BrightDate` for speed and convenience.
+
+```rust
+use brightdate::{BrightDate, BrightInstant};
+
+let bd  = BrightDate::now();           // f64 ergonomic form
+let inst = BrightInstant::from(bd);    // exact ns-precision form
+let back: BrightDate = inst.into();    // round-trips for the f64 range
+```
+
+---
+
+## Installing
+
+### From crates.io
+
+The `brightdate` library and all five CLI tools are published on [crates.io](https://crates.io/crates/brightdate):
+
+```bash
+# Library (for use in Rust projects)
+cargo add brightdate
+
+# CLI tools
+cargo install bdate     # date(1) replacement
+cargo install btime     # time(1) replacement
+cargo install buptime   # uptime(1) replacement
+cargo install bcal      # cal(1) replacement
+cargo install bwatch    # watch(1) replacement
+```
+
+### From Homebrew (macOS / Linux)
+
+The CLI tools are available via the [Digital Defiance Homebrew tap](https://github.com/Digital-Defiance/homebrew-tap):
+
+```bash
+brew tap digital-defiance/tap
+brew install digital-defiance/tap/bdate
+brew install digital-defiance/tap/btime
+brew install digital-defiance/tap/buptime
+brew install digital-defiance/tap/bcal
+brew install digital-defiance/tap/bwatch
+```
+
+After tapping you can also use the short names: `brew install bdate`, etc.
+
+### Using the Rust library
+
+```toml
+# Cargo.toml
+[dependencies]
+brightdate = "0.1"
+```
+
+```rust
+use brightdate::BrightDate;
+
+let now = BrightDate::now();
+println!("{:.5}", now);                  // e.g. 9603.57128
+println!("{}", now.to_iso8601());        // 2026-05-11T12:34:56.789Z
+```
+
+See the [crates.io docs](https://docs.rs/brightdate) for the full API.
+
+---
+
+## Building from source
 
 ### Rust
 
