@@ -12,12 +12,16 @@ repository.workspace = true
 homepage.workspace = true
 rust-version.workspace = true
 
+[lib]
+name = "bwatch"
+path = "src/lib.rs"
+
 [[bin]]
 name = "bwatch"
 path = "src/main.rs"
 
 [dependencies]
-brightdate = { path = "../brightdate", version = "0.1.1" }
+brightdate = { path = "../brightdate", version = "0.1.2" }
 clap = { workspace = true }
 
 [dev-dependencies]

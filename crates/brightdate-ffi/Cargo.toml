@@ -1,0 +1,23 @@
+[package]
+name = "brightdate-ffi"
+description = "C FFI static library exposing bsh builtins (bdate, btime, buptime, bcal, bwatch)"
+publish = false
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+rust-version.workspace = true
+
+[lib]
+name = "brightdate_ffi"
+crate-type = ["staticlib"]
+
+[dependencies]
+bdate   = { path = "../bdate" }
+btime   = { path = "../btime" }
+buptime = { path = "../buptime" }
+bcal    = { path = "../bcal" }
+bwatch  = { path = "../bwatch" }
+brightdate = { path = "../brightdate" }
