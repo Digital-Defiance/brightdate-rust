@@ -1,16 +1,23 @@
 [package]
 name = "buptime"
+description = "BrightDate uptime(1) — show system uptime in BrightDate units"
+keywords = ["uptime", "cli", "brightdate", "system", "loadavg"]
+categories = ["command-line-utilities", "date-and-time"]
+readme = "../../README.md"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
 license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+rust-version.workspace = true
 
 [[bin]]
 name = "buptime"
 path = "src/main.rs"
 
 [dependencies]
-brightdate = { path = "../brightdate" }
+brightdate = { path = "../brightdate", version = "0.1.1" }
 clap = { workspace = true }
 
 [target.'cfg(unix)'.dependencies]

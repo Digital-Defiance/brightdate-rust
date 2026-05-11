@@ -1,16 +1,23 @@
 [package]
 name = "bdate"
+description = "BrightDate CLI — show the current BrightDate or convert between BrightDate and conventional dates"
+keywords = ["time", "date", "cli", "brightdate", "j2000"]
+categories = ["command-line-utilities", "date-and-time"]
+readme = "../../README.md"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
 license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+rust-version.workspace = true
 
 [[bin]]
 name = "bdate"
 path = "src/main.rs"
 
 [dependencies]
-brightdate = { path = "../brightdate" }
+brightdate = { path = "../brightdate", version = "0.1.1" }
 chrono = { workspace = true }
 clap = { workspace = true }
 

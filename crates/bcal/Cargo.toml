@@ -1,16 +1,23 @@
 [package]
 name = "bcal"
+description = "BrightDate cal(1) — calendar viewer using BrightDate units"
+keywords = ["calendar", "cli", "brightdate", "cal", "date"]
+categories = ["command-line-utilities", "date-and-time"]
+readme = "../../README.md"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
 license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+rust-version.workspace = true
 
 [[bin]]
 name = "bcal"
 path = "src/main.rs"
 
 [dependencies]
-brightdate = { path = "../brightdate" }
+brightdate = { path = "../brightdate", version = "0.1.1" }
 chrono = { workspace = true }
 clap = { workspace = true }
 
