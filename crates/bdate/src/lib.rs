@@ -1,5 +1,29 @@
 use brightdate::{BrightDate, BrightDateOptions};
+use chrono::{DateTime, Local, Utc};
 use clap::{Arg, ArgAction, Command};
+
+/// Render a BrightDate as a formatted date string. If `local` is true, render
+/// in the system local timezone; otherwise UTC. Format may be either a strftime
+/// pattern or one of the named presets ("rfc2822", "rfc3339", "date", "time",
+/// "datetime", "short", "long").
+fn format_calendar(bd: &BrightDate, fmt: &str, local: bool) -> String {
+    let utc: DateTime<Utc> = bd.to_date_time();
+    let pattern: &str = match fmt {
+        "rfc2822"  => return if local { utc.with_timezone(&Local).to_rfc2822() } else { utc.to_rfc2822() },
+        "rfc3339"  => return if local { utc.with_timezone(&Local).to_rfc3339() } else { utc.to_rfc3339() },
+        "date"     => "%Y-%m-%d",
+        "time"     => "%H:%M:%S",
+        "datetime" => "%Y-%m-%d %H:%M:%S",
+        "short"    => "%b %d %H:%M",
+        "long"     => "%a, %b %d %Y %I:%M:%S %p %Z",
+        other      => other, // treat as raw strftime pattern
+    };
+    if local {
+        utc.with_timezone(&Local).format(pattern).to_string()
+    } else {
+        utc.format(pattern).to_string()
+    }
+}
 
 fn print_all(bd: &BrightDate) {
     let c = bd.decompose();
@@ -17,6 +41,12 @@ fn print_all(bd: &BrightDate) {
     println!("Microdays   : {:.0} \u{00b5}d", bd.value * 1_000_000.0);
     println!("Nanodays    : {:.0} nd", bd.value * 1_000_000_000.0);
     println!("ISO 8601    : {}", bd.to_iso());
+    println!("RFC 2822    : {}", format_calendar(bd, "rfc2822", false));
+    println!("RFC 3339    : {}", format_calendar(bd, "rfc3339", false));
+    println!("UTC date    : {}", format_calendar(bd, "datetime", false));
+    println!("Local date  : {}", format_calendar(bd, "datetime", true));
+    println!("Short (UTC) : {}", format_calendar(bd, "short", false));
+    println!("Long  (UTC) : {}", format_calendar(bd, "long", false));
     println!("Julian Date : {:.6}", bd.to_julian_date());
     println!("Mod. Julian : {:.6}", bd.to_modified_julian_date());
     let (wk, secs) = bd.to_gps_time();
@@ -91,8 +121,22 @@ pub fn run(args: &[String]) -> i32 {
                 .short('f')
                 .long("format")
                 .value_name("FORMAT")
-                .help("Output format: bright (default), millidays, iso, unix, julian, gps, all")
+                .help("Output format: bright (default), millidays, iso, rfc2822, rfc3339, date, time, datetime, short, long, unix, julian, mjd, gps, all")
                 .default_value("bright"),
+        )
+        .arg(
+            Arg::new("strftime")
+                .short('s')
+                .long("strftime")
+                .value_name("PATTERN")
+                .help("Render using a chrono strftime pattern (e.g. '%b %d %I:%M%p')"),
+        )
+        .arg(
+            Arg::new("local")
+                .short('l')
+                .long("local")
+                .help("Render calendar formats in the system local timezone (default: UTC)")
+                .action(ArgAction::SetTrue),
         )
         .arg(
             Arg::new("precision")
@@ -121,6 +165,13 @@ pub fn run(args: &[String]) -> i32 {
                 .long("diff")
                 .value_name("DATE2")
                 .help("Compute difference between DATE and DATE2 (in days)"),
+        )
+        .arg(
+            Arg::new("julian")
+                .short('j')
+                .long("julian")
+                .help("Output as Julian Date (shorthand for -f julian)")
+                .action(ArgAction::SetTrue),
         );
 
     let matches = match cmd.try_get_matches_from(args) {
@@ -139,6 +190,9 @@ pub fn run(args: &[String]) -> i32 {
 
     let use_tai = matches.get_flag("tai");
     let do_breakdown = matches.get_flag("breakdown");
+    let to_julian = matches.get_flag("julian");
+    let local_tz = matches.get_flag("local");
+    let strftime_pat = matches.get_one::<String>("strftime").cloned();
 
     let raw = match matches.get_one::<String>("date") {
         Some(input) => match parse_input(input) {
@@ -181,11 +235,21 @@ pub fn run(args: &[String]) -> i32 {
         return 0;
     }
 
-    match matches.get_one::<String>("format").map(|s| s.as_str()).unwrap_or("bright") {
+    if let Some(pat) = strftime_pat.as_deref() {
+        println!("{}", format_calendar(&bd, pat, local_tz));
+        return 0;
+    }
+
+    let fmt = if to_julian { "julian" } else { matches.get_one::<String>("format").map(|s| s.as_str()).unwrap_or("bright") };
+    match fmt {
         "millidays" => println!("{:.3} md", bd.value * 1_000.0),
         "iso"       => println!("{}", bd.to_iso()),
         "unix"      => println!("{}", bd.to_unix_ms() as i64),
-        "julian"    => println!("{:.6}", bd.to_julian_date()),
+        "julian"    => println!("{:.prec$}", bd.to_julian_date(), prec = precision as usize),
+        "mjd"       => println!("{:.prec$}", bd.to_modified_julian_date(), prec = precision as usize),
+        "rfc2822" | "rfc3339" | "date" | "time" | "datetime" | "short" | "long" => {
+            println!("{}", format_calendar(&bd, fmt, local_tz));
+        }
         "gps" => {
             let (wk, secs) = bd.to_gps_time();
             println!("GPS week {} + {:.3} s", wk, secs);

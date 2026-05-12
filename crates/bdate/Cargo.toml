@@ -21,7 +21,7 @@ name = "bdate"
 path = "src/main.rs"
 
 [dependencies]
-brightdate = { path = "../brightdate", version = "0.1.2" }
+brightdate = { path = "../brightdate", version = "0.1.3" }
 chrono = { workspace = true }
 clap = { workspace = true }
 
