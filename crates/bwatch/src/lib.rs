@@ -1,6 +1,6 @@
 use brightdate::BrightDate;
 use clap::{Arg, Command};
-use std::time::Duration;
+use std::time::{Duration, Instant};
 use std::thread;
 
 pub fn run(args: &[String]) -> i32 {
@@ -73,9 +73,13 @@ pub fn run(args: &[String]) -> i32 {
         );
         println!();
 
+        let t0 = Instant::now();
         let _ = std::process::Command::new(cmd_args[0])
             .args(&cmd_args[1..])
             .status();
+        let elapsed = t0.elapsed().as_secs_f64();
+        let elapsed_days = elapsed / 86400.0;
+        println!("elapsed: {:.3}s / {:.5} days", elapsed, elapsed_days);
 
         if max_count > 0 && iteration >= max_count {
             break;

@@ -7,7 +7,7 @@ fn cmd() -> Command {
 
 #[test]
 fn version_flag() {
-    cmd().arg("--version").assert().success().stdout(predicate::str::contains("0.1.0"));
+    cmd().arg("--version").assert().success().stdout(predicate::str::contains(env!("CARGO_PKG_VERSION")));
 }
 
 #[test]
@@ -116,12 +116,12 @@ fn count_two_runs_twice() {
 
 #[test]
 fn elapsed_shows_seconds_suffix() {
-    // elapsed line format: "elapsed: 0.000s / 0.00000 days"
+    // elapsed line format: "elapsed: <n>s / <n> days"
     cmd()
         .args(["--count", "1", "true"])
         .assert()
         .success()
-        .stdout(predicate::str::contains("0.000s"));
+        .stdout(predicate::str::is_match(r"elapsed: \d+\.\d+s").unwrap());
 }
 
 // ── stderr passthrough ───────────────────────────────────────────────────────

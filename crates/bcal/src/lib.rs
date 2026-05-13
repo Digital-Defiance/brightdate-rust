@@ -1,3 +1,4 @@
+use brightdate::conversions::from_unix_ms;
 use chrono::{Datelike, NaiveDate, Utc};
 use clap::{Arg, ArgAction, Command};
 
@@ -25,7 +26,7 @@ fn next_month_pair(y: i32, m: u32) -> (i32, u32) {
     if m == 12 { (y + 1, 1) } else { (y, m + 1) }
 }
 
-fn print_month(year: i32, month: u32, today: &NaiveDate, no_color: bool, _precision: u8) {
+fn print_month(year: i32, month: u32, today: &NaiveDate, no_color: bool, precision: u8) {
     println!("{} {}", MONTH_NAMES[(month - 1) as usize], year);
     println!("Su Mo Tu We Th Fr Sa");
 
@@ -62,6 +63,16 @@ fn print_month(year: i32, month: u32, today: &NaiveDate, no_color: bool, _precis
     if col % 7 != 0 {
         println!();
     }
+
+    // BrightDate annotations: show BD value at noon UTC for each day
+    for day in 1..=dim {
+        let naive_noon = NaiveDate::from_ymd_opt(year, month, day)
+            .and_then(|d| d.and_hms_opt(12, 0, 0))
+            .expect("valid date");
+        let ms = naive_noon.and_utc().timestamp_millis() as f64;
+        let bd = from_unix_ms(ms).unwrap_or(f64::NAN);
+        println!("  {day:2}: {:.prec$}", bd, prec = precision as usize);
+    }
     println!();
 }
 
@@ -70,16 +81,10 @@ pub fn run(args: &[String]) -> i32 {
         .version(env!("CARGO_PKG_VERSION"))
         .about("Display a calendar with BrightDate annotations")
         .arg(
-            Arg::new("year")
-                .value_name("YEAR")
-                .help("Year to display (optional; defaults to current year when combined with --year)")
-                .num_args(0..=1),
-        )
-        .arg(
-            Arg::new("month")
-                .value_name("MONTH")
-                .help("Month (1-12) to display")
-                .num_args(0..=1),
+            Arg::new("args")
+                .value_name("[MONTH-or-YEAR] [YEAR]")
+                .help("Optional month (1-12) and/or year; e.g. `bcal 5 2025` or `bcal 2025`")
+                .num_args(0..=2),
         )
         .arg(
             Arg::new("three")
@@ -133,10 +138,9 @@ pub fn run(args: &[String]) -> i32 {
     let three_months = matches.get_flag("three");
 
     let positional: Vec<i32> = matches
-        .get_many::<String>("year")
+        .get_many::<String>("args")
         .into_iter()
         .flatten()
-        .chain(matches.get_many::<String>("month").into_iter().flatten())
         .filter_map(|s| s.parse().ok())
         .collect();
 
