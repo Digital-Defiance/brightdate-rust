@@ -16,7 +16,7 @@ edition = "2021"
 authors = ["Digital-Defiance"]
 license = "MIT"
 repository = "https://github.com/Digital-Defiance/brightdate-rust"
-homepage = "https://brightdate.brightchain.org"
+homepage = "https://brightdate.org"
 rust-version = "1.75"
 
 [workspace.dependencies]

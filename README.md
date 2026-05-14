@@ -1,4 +1,4 @@
-# BrightDate — Workspace
+# [BrightDate](https://brightdate.org) — Workspace
 
 > *Named in homage to Star Trek's Stardate — one universal scalar to rule them all.*
 
