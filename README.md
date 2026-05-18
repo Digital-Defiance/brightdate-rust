@@ -85,16 +85,27 @@ BrightDate ships in three flavors so you can pick the right trade-off between er
 |------|----------------|-----------|-------|-----------|
 | **`BrightDate`** | `f64` decimal days since J2000.0 | ~190 ns in the current era; widens with magnitude | ±287,000 years from J2000 | The 99% case — math, astronomy, scheduling, logging, display. Sorts, diffs, and serializes natively. |
 | **`BrightInstant`** | `i64` TAI seconds + `u32` nanos since J2000.0 | **1 ns exactly, everywhere** | Effectively unlimited | You need nanosecond precision at any magnitude — distributed systems, GPS engineering, interplanetary mission timing. The rigorous companion to `BrightDate`. |
-| **`ExactBrightDate`** *(TypeScript only)* | `BigInt` picoseconds since J2000.0 | **1 ps exactly, everywhere** | Effectively unlimited | You must round-trip arbitrary Unix milliseconds bit-for-bit — blockchain consensus, archival storage, byte-identical reconstruction. |
+| **`ExactBrightDate`** | `i128` picoseconds since J2000.0 (Rust) / `BigInt` picoseconds (TypeScript) | **1 ps exactly, everywhere** | Effectively unlimited | You must round-trip arbitrary Unix milliseconds bit-for-bit — blockchain consensus, archival storage, byte-identical reconstruction. |
 
-**Rust** ships `BrightDate` + `BrightInstant`. **TypeScript** ships all three. You can convert freely between them: store in the exact form at storage boundaries, compute in `BrightDate` for speed and convenience.
+**Rust** and **TypeScript** both ship all three companion types, plus the `PBD` / `BrightLabel` deep-time naming layer for pre-J2000.0 instants. You can convert freely between them: store in the exact form at storage boundaries, compute in `BrightDate` for speed and convenience.
 
 ```rust
-use brightdate::{BrightDate, BrightInstant};
+use brightdate::{BrightDate, BrightInstant, ExactBrightDate, BrightLabel, brightdate_to_label};
 
 let bd  = BrightDate::now();           // f64 ergonomic form
 let inst = BrightInstant::from(bd);    // exact ns-precision form
 let back: BrightDate = inst.into();    // round-trips for the f64 range
+
+// Bit-exact Unix-ms storage:
+let exact = ExactBrightDate::from_unix_ms(1_700_000_000_000);
+assert_eq!(exact.to_unix_ms(), 1_700_000_000_000);
+
+// Deep-time labelling: pre-J2000.0 instants page into PBD eras.
+let pre = BrightDate::from_value(-1.0);  // one day before J2000.0
+match brightdate_to_label(pre).unwrap() {
+    BrightLabel::Pbd { era, .. } => assert_eq!(era, 1),
+    _ => unreachable!(),
+}
 ```
 
 ---

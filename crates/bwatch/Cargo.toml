@@ -21,7 +21,7 @@ name = "bwatch"
 path = "src/main.rs"
 
 [dependencies]
-brightdate = { path = "../brightdate", version = "0.1.4" }
+brightdate = { path = "../brightdate", version = "0.2.0" }
 clap = { workspace = true }
 
 [dev-dependencies]

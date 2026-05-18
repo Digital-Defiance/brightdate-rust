@@ -39,18 +39,29 @@ pub mod calendar;
 pub mod comparisons;
 pub mod constants;
 pub mod conversions;
+pub mod exact;
 pub mod formatting;
 pub mod instant;
 pub mod interplanetary;
 pub mod intervals;
 pub mod leap_seconds;
+pub mod pbd;
 pub mod scheduling;
 pub mod serialization;
 pub mod timezones;
 pub mod types;
 pub mod validation;
 
+pub use exact::ExactBrightDate;
 pub use instant::BrightInstant;
+pub use pbd::{
+    bright_date_from_pbd, bright_date_to_pbd, bright_instant_from_pbd, bright_instant_to_pbd,
+    brightdate_to_label, compare_exact_pbd, compare_pbd, format_bright_label, format_pbd,
+    from_bright_label, from_exact_pbd, from_pbd, is_pbd_later, parse_bright_label, parse_pbd,
+    pbd_era, pbd_page, to_bright_label, to_exact_pbd, to_pbd, BrightLabel, ExactPbd, Pbd,
+    DEFAULT_BD_PRECISION, DEFAULT_PBD_PRECISION, PBD_ERA_PICOSECONDS, PBD_ERA_SECONDS,
+    PBD_ERA_SECONDS_F,
+};
 pub use types::{BrightDateComponents, BrightDateOptions, BrightDuration, Precision};
 
 use crate::constants::DEFAULT_PRECISION;
