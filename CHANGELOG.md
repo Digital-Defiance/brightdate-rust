@@ -8,6 +8,69 @@ type and is shared by every binary in this repository (`bdate`, `btime`,
 `buptime`, `bcal`, `bwatch`, and the FFI shim). Bumps to the `brightdate`
 crate ripple through every consumer.
 
+## [0.5.0] — 2026-05-19
+
+### Added — Bright Spacetime Standard surface
+
+Three new modules port the corresponding TypeScript modules from
+`@brightchain/brightdate` 0.36.0 to Rust at full feature parity.
+
+- **`spacetime` module** — the c = 1 unit hierarchy.
+  - Constants: `SPEED_OF_LIGHT_M_PER_S` (exact, SI 2019), `BRIGHT_METER_M`,
+    `LIGHT_DAY_M` (= c × 86 400 s, exact integer metres).
+  - `BrightUnit` struct plus the `BRIGHT_METER_UNITS` and `LIGHT_DAY_UNITS`
+    catalogues (μbm, mbm, bm, Mbm, Gbm; Lμd, Lmd, Ld, Lkd).
+  - Conversion helpers: `seconds_to_metres`, `metres_to_seconds`,
+    `seconds_to_bright_meters`, `bright_meters_to_seconds`,
+    `metres_to_bright_meters`, `bright_meters_to_metres`,
+    `days_to_bright_seconds`, `bright_seconds_to_days`, `days_to_metres`,
+    `metres_to_days`.
+
+- **`relativity` module** — special-relativistic operations in Bright units.
+  - Types: `SpacetimeEvent`, `Velocity` (= `[f64; 3]`), `IntervalKind` enum
+    (`Timelike` / `Lightlike` / `Spacelike`).
+  - Interval ops: `interval_squared`, `interval_kind`, `causally_connected`,
+    `proper_time_between`, `proper_distance_between`, `proper_time_along`
+    (returns `Result` for non-physical worldlines).
+  - Velocity helpers: `speed`, `gamma_from_speed`, `gamma`, `rapidity`,
+    `add_velocities`.
+  - Lorentz machinery: `boost` (general non-collinear, returns `Result`
+    for `|β| ≥ 1`), `doppler_factor`.
+
+- **`geodesy` module** — BrightSpace ECEF / WGS84 geodesy.
+  - WGS84 constants: `WGS84_SEMI_MAJOR_AXIS_M`, `WGS84_SEMI_MINOR_AXIS_M`,
+    `WGS84_FLATTENING`, `WGS84_INVERSE_FLATTENING`,
+    `WGS84_FIRST_ECCENTRICITY_SQUARED`, plus the IUGG `EARTH_MEAN_RADIUS_M`.
+  - Types: `GeodeticCoordinate` (with `::new` and `::surface` constructors),
+    `EcefCoordinate`, `DistancePair`, `BrightSpaceDistance`.
+  - GPS ↔ ECEF: `geodetic_to_ecef` (closed-form), `ecef_to_geodetic`
+    (Bowring 1985 closed-form, sub-millimetre accurate).
+  - Distance primitives: `ecef_chord_metres`, `ecef_chord_bright_meters`,
+    `ecef_magnitude`, `ecef_central_angle` (numerically stable
+    law-of-cosines form), `ecef_arc_metres`, `ecef_arc_metres_at_radius`,
+    `surface_distance_metres` (haversine on IUGG mean Earth radius),
+    `light_travel_time_seconds`.
+  - One-shot convenience: `gps_distance` (chord + great-circle from
+    lat/lng) and `bright_space_distance` (chord + arc on mean-Earth + arc
+    on average-radius sphere from two ECEF vectors directly).
+
+### Tests
+- 14 new tests in `test_spacetime.rs`
+- 35 new tests in `test_relativity.rs` (twin paradox, boost
+  interval-preservation, Doppler symmetry, etc.)
+- 61 new tests in `test_geodesy.rs` (cardinal-direction sanity, GODE round
+  trip, antipodal collapse, satellite-altitude scenarios for
+  `bright_space_distance`)
+- Doctests on `geodetic_to_ecef` and `gps_distance`.
+
+Total: 110 new tests; full crate suite remains green.
+
+### Versioning
+The workspace bumps every crate to 0.5.0 in lockstep (`bdate`, `btime`,
+`buptime`, `bcal`, `bwatch`, `brightdate`). The binaries' behaviour is
+unchanged this release; the lockstep bump keeps `[workspace.dependencies]
+brightdate = "0.5.0"` consistent with the published library version.
+
 ## [0.4.0] — 2026-05-18
 
 ### Removed
