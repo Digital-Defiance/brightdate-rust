@@ -1,3 +1,9 @@
+// `local_time_of_day` and `is_daytime` are deprecated in 0.3.0 because they
+// return BD-day-grid fractions, not civil-clock fractions. The tests below
+// pin their behavior so consumers don't break silently before the eventual
+// removal — they intentionally do *not* assert anything about civil clocks.
+#![allow(deprecated)]
+
 use brightdate::timezones::*;
 
 const EPS: f64 = 1e-12;
@@ -238,11 +244,12 @@ fn format_with_timezone_utc_minus_5_smaller_local() {
     assert!(s.contains(&local_str[..8]), "got: {s}");
 }
 
-// ── local_time_of_day ─────────────────────────────────────────────────────────
+// ── local_time_of_day (deprecated; tests pin BD-day-grid behavior) ──────────
 
 #[test]
 fn local_time_of_day_zero_offset_epoch() {
-    // BD 0.0 fraction = 0.0 (start of decimal day, not UTC noon)
+    // BD 0.0 has BD-day fraction 0.0 (start of a BD day on the BD-day grid).
+    // This is *not* UTC noon — see the deprecation note on the function.
     let frac = local_time_of_day(0.0, 0.0);
     assert!((frac - 0.0).abs() < 0.001);
 }
@@ -255,34 +262,32 @@ fn local_time_of_day_in_range() {
 
 #[test]
 fn local_time_of_day_offset_shifts() {
-    let bd = 9622.0; // midnight-ish UTC
+    let bd = 9622.0;
     let frac_utc = local_time_of_day(bd, 0.0);
     let frac_local = local_time_of_day(bd, hours_to_fractional_days(8.0));
-    // 8 hours later in local time
+    // The offset shifts the BD-day-grid fraction by 8/24, modulo 1.
     let expected_diff = 8.0 / 24.0;
-    let actual_diff = (frac_local - frac_utc + 1.0) % 1.0;
-    assert!((actual_diff - expected_diff).abs() < 0.001, "diff: {actual_diff}");
+    assert!((frac_local - frac_utc - expected_diff).abs() < 0.001);
 }
 
-// ── is_daytime ────────────────────────────────────────────────────────────────
+// ── is_daytime (deprecated; tests pin BD-day-grid behavior) ─────────────────
 
 #[test]
-fn is_daytime_noon_is_true() {
-    // Noon is fraction 0.5: 6/24 <= 0.5 < 18/24 → daytime
-    // BD 9622.5 has fraction 0.5
+fn is_daytime_bd_day_fraction_half_is_true() {
+    // is_daytime returns true when BD-day fraction is in [0.25, 0.75).
+    // BD 9622.5 has fraction 0.5 on the BD-day grid → "daytime" on that grid.
+    // This does NOT mean civil noon UTC.
     assert!(is_daytime(9622.5, 0.0));
 }
 
 #[test]
-fn is_daytime_midnight_is_false() {
-    // Fraction 0.0 (start of day, midnight-equivalent) is not in [6/24, 18/24)
-    let bd = 9622.0; // whole number → fraction 0.0
-    let daytime = is_daytime(bd, 0.0);
-    assert!(!daytime);
+fn is_daytime_bd_day_fraction_zero_is_false() {
+    // BD 9622.0 has BD-day fraction 0.0 — outside [0.25, 0.75).
+    let bd = 9622.0;
+    assert!(!is_daytime(bd, 0.0));
 }
 
 #[test]
 fn is_daytime_returns_bool() {
-    // Just verify it doesn't panic
     let _ = is_daytime(9622.5, hours_to_fractional_days(5.0));
 }

@@ -107,6 +107,21 @@ pub fn format_with_timezone(bright_date: BrightDateValue, timezone: &str, precis
 }
 
 /// Return the local time-of-day as a fraction in `[0, 1)`.
+///
+/// **Deprecated.** Returns the fraction of a *BD day* offset by `offset_days`,
+/// not the fraction of a civil day. The BrightDate "day" boundary is the
+/// J2000.0 anchor instant (UTC `2000-01-01T11:58:55.816Z`), not any civil
+/// midnight, so the result is approximately 12 hours off from any civil
+/// clock. BrightDate is intentionally timezone-free; if you need a
+/// civil-clock fraction at the display edge, use
+/// [`crate::civil_time::utc_day_fraction`] (UTC only — local time is not
+/// modelled in BrightDate). See specification §2.1.
+#[deprecated(
+    since = "0.3.0",
+    note = "Returns BD-day fraction, not civil-day fraction. Use \
+            crate::civil_time::utc_day_fraction for a UTC clock-face fraction. \
+            BrightDate does not model local time."
+)]
 pub fn local_time_of_day(bright_date: BrightDateValue, offset_days: f64) -> f64 {
     let local = bright_date + offset_days;
     let frac = local - local.floor();
@@ -114,7 +129,20 @@ pub fn local_time_of_day(bright_date: BrightDateValue, offset_days: f64) -> f64 
 }
 
 /// Return `true` if local time is between 06:00 and 18:00 (simple approximation).
+///
+/// **Deprecated.** The window is computed against the BD-day fraction, not
+/// the civil day, so the result drifts ~12 hours from any wall-clock notion
+/// of daytime. BrightDate is intentionally timezone-free; for a civil-time
+/// daytime check, use your platform's calendar API to obtain the local
+/// hour and compare against `[6, 18)`. See specification §2.1.
+#[deprecated(
+    since = "0.3.0",
+    note = "Computes its window against the BD-day fraction, not the civil \
+            day. Use a calendar API for civil-clock daytime checks. \
+            BrightDate does not model local time."
+)]
 pub fn is_daytime(bright_date: BrightDateValue, offset_days: f64) -> bool {
+    #[allow(deprecated)]
     let tod = local_time_of_day(bright_date, offset_days);
     (6.0 / 24.0..18.0 / 24.0).contains(&tod)
 }
@@ -145,12 +173,18 @@ mod tests {
 
     #[test]
     fn daytime_detection() {
-        // noon UTC + no offset
-        let noon = 0.0 + 12.0 / 24.0; // noon on day 0 as fraction
-        // A BrightDate where the fractional part is 0.5 is noon UTC
-        assert!(is_daytime(100.5, 0.0));
-        // 2 AM UTC
-        assert!(!is_daytime(100.0 + 2.0 / 24.0, 0.0));
-        let _ = noon; // suppress lint
+        // is_daytime returns true when the BD-day fraction is in [0.25, 0.75).
+        // The BD-day fraction is NOT the same as the UTC clock fraction (the
+        // BD-day boundary is the J2000.0 anchor instant, not UTC midnight),
+        // so this is a BD-day-grid check, not a civil-clock check. Tests pin
+        // the deprecated behavior so existing callers don't silently break.
+        #[allow(deprecated)]
+        {
+            // BD value with fractional part 0.5 → in [0.25, 0.75) → "daytime"
+            // on the BD-day grid.
+            assert!(is_daytime(100.5, 0.0));
+            // BD value with fractional part 1/12 → outside [0.25, 0.75).
+            assert!(!is_daytime(100.0 + 2.0 / 24.0, 0.0));
+        }
     }
 }

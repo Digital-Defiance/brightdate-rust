@@ -87,10 +87,10 @@ BrightDate ships in three flavors so you can pick the right trade-off between er
 | **`BrightInstant`** | `i64` TAI seconds + `u32` nanos since J2000.0 | **1 ns exactly, everywhere** | Effectively unlimited | You need nanosecond precision at any magnitude — distributed systems, GPS engineering, interplanetary mission timing. The rigorous companion to `BrightDate`. |
 | **`ExactBrightDate`** | `i128` picoseconds since J2000.0 (Rust) / `BigInt` picoseconds (TypeScript) | **1 ps exactly, everywhere** | Effectively unlimited | You must round-trip arbitrary Unix milliseconds bit-for-bit — blockchain consensus, archival storage, byte-identical reconstruction. |
 
-**Rust** and **TypeScript** both ship all three companion types, plus the `PBD` / `BrightLabel` deep-time naming layer for pre-J2000.0 instants. You can convert freely between them: store in the exact form at storage boundaries, compute in `BrightDate` for speed and convenience.
+**Rust** and **TypeScript** both ship all three companion types, plus the `BD` / `PBD` display-label convention for rendering signed scalars (negatives appear as `PBD <abs>` so user-facing strings never carry a leading minus). You can convert freely between the three storage types: store in the exact form at storage boundaries, compute in `BrightDate` for speed and convenience.
 
 ```rust
-use brightdate::{BrightDate, BrightInstant, ExactBrightDate, BrightLabel, brightdate_to_label};
+use brightdate::{BrightDate, BrightInstant, ExactBrightDate, format_bd};
 
 let bd  = BrightDate::now();           // f64 ergonomic form
 let inst = BrightInstant::from(bd);    // exact ns-precision form
@@ -100,12 +100,9 @@ let back: BrightDate = inst.into();    // round-trips for the f64 range
 let exact = ExactBrightDate::from_unix_ms(1_700_000_000_000);
 assert_eq!(exact.to_unix_ms(), 1_700_000_000_000);
 
-// Deep-time labelling: pre-J2000.0 instants page into PBD eras.
-let pre = BrightDate::from_value(-1.0);  // one day before J2000.0
-match brightdate_to_label(pre).unwrap() {
-    BrightLabel::Pbd { era, .. } => assert_eq!(era, 1),
-    _ => unreachable!(),
-}
+// Pre-J2000.0 instants display with the PBD prefix on the absolute value.
+let pre = BrightDate::from_value(-11125.154);  // Apollo 11
+assert_eq!(format_bd(pre.value, 3).unwrap(), "PBD 11125.154");
 ```
 
 ---
