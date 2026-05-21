@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use clap::{ArgAction, ArgGroup, arg, command, value_parser};
+use clap::{arg, command, value_parser, ArgAction, ArgGroup};
 
 fn main() {
     // Create application like normal

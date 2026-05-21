@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 use std::process::exit;
 
-use clap::{Arg, ArgAction, Command, value_parser};
+use clap::{value_parser, Arg, ArgAction, Command};
 
 fn applet_commands() -> [Command; 2] {
     [

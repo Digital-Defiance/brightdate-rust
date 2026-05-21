@@ -22,7 +22,7 @@ rust-version = "1.75"
 [workspace.dependencies]
 brightdate = { path = "crates/brightdate", version = "0.5.0" }
 chrono = { version = "0.4", features = ["serde"] }
-clap = { version = "4", features = ["derive", "color"] }
+clap = { version = "~4.5", features = ["color"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 thiserror = "1"

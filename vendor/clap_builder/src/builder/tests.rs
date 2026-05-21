@@ -20,12 +20,11 @@ fn global_setting() {
         .disable_version_flag(true)
         .subcommand(Command::new("subcmd"));
     cmd._propagate();
-    assert!(
-        cmd.get_subcommands()
-            .find(|s| s.get_name() == "subcmd")
-            .unwrap()
-            .is_disable_version_flag_set()
-    );
+    assert!(cmd
+        .get_subcommands()
+        .find(|s| s.get_name() == "subcmd")
+        .unwrap()
+        .is_disable_version_flag_set());
 }
 
 // This test will *fail to compile* if Command is not Send + Sync
@@ -42,12 +41,11 @@ fn issue_2090() {
         .subcommand(Command::new("sub"));
     cmd._build_self(false);
 
-    assert!(
-        cmd.get_subcommands()
-            .next()
-            .unwrap()
-            .is_disable_version_flag_set()
-    );
+    assert!(cmd
+        .get_subcommands()
+        .next()
+        .unwrap()
+        .is_disable_version_flag_set());
 }
 
 // This test will *fail to compile* if Arg is not Send + Sync

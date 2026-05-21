@@ -1,4 +1,4 @@
-use clap::{Args, Command, FromArgMatches as _, arg};
+use clap::{arg, Args, Command, FromArgMatches as _};
 
 #[derive(Args, Debug)]
 struct DerivedArgs {

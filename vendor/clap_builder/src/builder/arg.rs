@@ -11,10 +11,9 @@ use std::{
 
 // Internal
 use super::{ArgFlags, ArgSettings};
-use crate::ArgAction;
-use crate::INTERNAL_ERROR_MSG;
-use crate::Id;
-use crate::ValueHint;
+#[cfg(feature = "unstable-ext")]
+use crate::builder::ext::Extension;
+use crate::builder::ext::Extensions;
 use crate::builder::ArgPredicate;
 use crate::builder::IntoResettable;
 use crate::builder::OsStr;
@@ -23,10 +22,11 @@ use crate::builder::Str;
 use crate::builder::StyledStr;
 use crate::builder::Styles;
 use crate::builder::ValueRange;
-#[cfg(feature = "unstable-ext")]
-use crate::builder::ext::Extension;
-use crate::builder::ext::Extensions;
 use crate::util::AnyValueId;
+use crate::ArgAction;
+use crate::Id;
+use crate::ValueHint;
+use crate::INTERNAL_ERROR_MSG;
 
 /// The abstract representation of a command line argument. Used to set all the options and
 /// relationships that define a valid argument for the program.
@@ -2065,9 +2065,8 @@ impl Arg {
     /// # use clap_builder as clap;
     /// # use std::env;
     /// # use clap::{Command, Arg, ArgAction};
-    /// # unsafe {
+    ///
     /// env::set_var("MY_FLAG", "env");
-    /// # }
     ///
     /// let m = Command::new("prog")
     ///     .arg(Arg::new("flag")
@@ -2095,10 +2094,8 @@ impl Arg {
     /// # use clap::{Command, Arg, ArgAction};
     /// # use clap::builder::FalseyValueParser;
     ///
-    /// # unsafe {
     /// env::set_var("TRUE_FLAG", "true");
     /// env::set_var("FALSE_FLAG", "0");
-    /// # }
     ///
     /// let m = Command::new("prog")
     ///     .arg(Arg::new("true_flag")
@@ -2132,9 +2129,7 @@ impl Arg {
     /// # use std::env;
     /// # use clap::{Command, Arg, ArgAction};
     ///
-    /// # unsafe {
     /// env::set_var("MY_FLAG", "env");
-    /// # }
     ///
     /// let m = Command::new("prog")
     ///     .arg(Arg::new("flag")
@@ -2156,9 +2151,7 @@ impl Arg {
     /// # use std::env;
     /// # use clap::{Command, Arg, ArgAction};
     ///
-    /// # unsafe {
     /// env::set_var("MY_FLAG", "env");
-    /// # }
     ///
     /// let m = Command::new("prog")
     ///     .arg(Arg::new("flag")
@@ -2180,9 +2173,7 @@ impl Arg {
     /// # use std::env;
     /// # use clap::{Command, Arg, ArgAction};
     ///
-    /// # unsafe {
     /// env::set_var("MY_FLAG_MULTI", "env1,env2");
-    /// # }
     ///
     /// let m = Command::new("prog")
     ///     .arg(Arg::new("flag")

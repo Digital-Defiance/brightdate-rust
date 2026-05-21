@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use clap::error::ErrorKind;
-use clap::{ArgAction, arg, command, value_parser};
+use clap::{arg, command, value_parser, ArgAction};
 
 fn main() {
     // Create application like normal

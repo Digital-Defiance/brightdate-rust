@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use clap::{Arg, ArgAction, ArgGroup, ArgMatches, Command, command, value_parser};
+use clap::{command, value_parser, Arg, ArgAction, ArgGroup, ArgMatches, Command};
 
 fn main() {
     let matches = cli().get_matches();

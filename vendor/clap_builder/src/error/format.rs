@@ -5,7 +5,6 @@
 
 use std::borrow::Cow;
 
-use crate::ArgAction;
 use crate::builder::Command;
 use crate::builder::StyledStr;
 use crate::builder::Styles;
@@ -16,6 +15,7 @@ use crate::error::ContextValue;
 use crate::error::ErrorKind;
 use crate::output::TAB;
 use crate::util::Escape;
+use crate::ArgAction;
 
 /// Defines how to format an error for displaying to the user
 pub trait ErrorFormatter: Sized {
