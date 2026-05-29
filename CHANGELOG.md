@@ -8,6 +8,19 @@ type and is shared by every binary in this repository (`bdate`, `btime`,
 `buptime`, `bcal`, `bwatch`, and the FFI shim). Bumps to the `brightdate`
 crate ripple through every consumer.
 
+## [0.5.3] — 2026-05-29
+
+### Fixed — packaging / git tag alignment
+
+- Git tag `v0.5.2` pointed at the bdate `+format` commit only; the `btime`
+  color output landed on `main` afterward and was never included in tagged
+  tarballs used by bsh PPA/Homebrew builds. **v0.5.3** is the first tag that
+  includes both the bdate `+format` fix and `btime` color output.
+
+### Versioning
+Lockstep workspace bump to 0.5.3 (`bdate`, `btime`, `buptime`, `bcal`,
+`bwatch`, `brightdate`).
+
 ## [0.5.2] — 2026-05-29
 
 ### Added — `btime` color output
