@@ -1,6 +1,11 @@
+mod color;
+mod output;
+
 use bdate;
 use brightdate::BrightDate;
-use clap::{Arg, Command};
+use clap::{Arg, ArgAction, Command};
+use color::{parse_color_scheme, parse_color_when, ColorScheme, ColorWhen, Colors};
+use output::print_timing_report;
 use std::process;
 use std::time::Instant;
 
@@ -22,6 +27,50 @@ fn children_cpu_secs() -> Option<(f64, f64)> {
     None
 }
 
+fn parse_color_setting(value: &str, setting: &str) -> ColorWhen {
+    match parse_color_when(value) {
+        Ok(when) => when,
+        Err(e) => {
+            eprintln!("btime: {e}");
+            eprintln!("btime: try `btime --help` for valid {setting} values");
+            process::exit(2);
+        }
+    }
+}
+
+fn parse_scheme_setting(value: &str) -> ColorScheme {
+    match parse_color_scheme(value) {
+        Ok(scheme) => scheme,
+        Err(e) => {
+            eprintln!("btime: {e}");
+            eprintln!("btime: try `btime --help` for valid --color-scheme values");
+            process::exit(2);
+        }
+    }
+}
+
+fn resolve_color_settings(matches: &clap::ArgMatches) -> Colors {
+    let color_when = if matches.get_flag("no_color") {
+        ColorWhen::Never
+    } else if let Some(value) = matches.get_one::<String>("color") {
+        parse_color_setting(value, "--color values")
+    } else if let Ok(value) = std::env::var("BTIME_COLOR") {
+        parse_color_setting(&value, "BTIME_COLOR values")
+    } else {
+        ColorWhen::Auto
+    };
+
+    let scheme = if let Some(value) = matches.get_one::<String>("color_scheme") {
+        parse_scheme_setting(value)
+    } else if let Ok(value) = std::env::var("BTIME_COLOR_SCHEME") {
+        parse_scheme_setting(&value)
+    } else {
+        ColorScheme::Default
+    };
+
+    Colors::resolve(color_when, scheme)
+}
+
 pub fn run(args: &[String]) -> i32 {
     // No command given → show current BrightDate date/time
     if args.len() <= 1 {
@@ -31,6 +80,29 @@ pub fn run(args: &[String]) -> i32 {
     let cmd = Command::new("btime")
         .version(env!("CARGO_PKG_VERSION"))
         .about("Time a command, reporting elapsed time in BrightDate units")
+        .arg(
+            Arg::new("color")
+                .long("color")
+                .value_name("WHEN")
+                .num_args(0..=1)
+                .default_missing_value("always")
+                .help("Colorize timing output: auto, always, never, ansi, or truecolor")
+                .action(ArgAction::Set),
+        )
+        .arg(
+            Arg::new("no_color")
+                .long("no-color")
+                .help("Disable color output")
+                .action(ArgAction::SetTrue)
+                .conflicts_with("color"),
+        )
+        .arg(
+            Arg::new("color_scheme")
+                .long("color-scheme")
+                .value_name("SCHEME")
+                .help("Color palette: default or bright")
+                .default_value("default"),
+        )
         .arg(
             Arg::new("command")
                 .help("Command and arguments to time")
@@ -46,6 +118,8 @@ pub fn run(args: &[String]) -> i32 {
             return e.exit_code();
         }
     };
+
+    let colors = resolve_color_settings(&matches);
 
     let cmd_args: Vec<&str> = matches
         .get_many::<String>("command")
@@ -70,13 +144,7 @@ pub fn run(args: &[String]) -> i32 {
     let end_bd = BrightDate::now();
     let cpu_after = children_cpu_secs();
 
-    eprintln!();
-    eprintln!("real     {:.9} days  ({:.6} s)", elapsed_days, elapsed_secs);
-    eprintln!("         {:.6} millidays", elapsed_days * 1_000.0);
-    eprintln!("         {:.3} microdays", elapsed_days * 1_000_000.0);
-    eprintln!("         {:.0} nanodays", elapsed_days * 1_000_000_000.0);
-
-    if let (Some((u0, s0)), Some((u1, s1))) = (cpu_before, cpu_after) {
+    let (user, sys, cpu_pct) = if let (Some((u0, s0)), Some((u1, s1))) = (cpu_before, cpu_after) {
         let user = (u1 - u0).max(0.0);
         let sys = (s1 - s0).max(0.0);
         let cpu = user + sys;
@@ -85,12 +153,21 @@ pub fn run(args: &[String]) -> i32 {
         } else {
             0.0
         };
-        eprintln!("user     {:.6} s  ({:.6} millidays)", user, user / 86.4);
-        eprintln!("sys      {:.6} s  ({:.6} millidays)", sys, sys / 86.4);
-        eprintln!("cpu      {:.1}%", cpu_pct);
-    }
-    eprintln!("start    {:.9}", start_bd.value);
-    eprintln!("end      {:.9}", end_bd.value);
+        (Some(user), Some(sys), Some(cpu_pct))
+    } else {
+        (None, None, None)
+    };
+
+    print_timing_report(
+        &colors,
+        elapsed_secs,
+        elapsed_days,
+        user,
+        sys,
+        cpu_pct,
+        start_bd.value,
+        end_bd.value,
+    );
 
     status.code().unwrap_or(1)
 }

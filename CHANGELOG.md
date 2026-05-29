@@ -8,6 +8,22 @@ type and is shared by every binary in this repository (`bdate`, `btime`,
 `buptime`, `bcal`, `bwatch`, and the FFI shim). Bumps to the `brightdate`
 crate ripple through every consumer.
 
+## [0.5.1] — 2026-05-29
+
+### Added — `btime` color output
+
+- Optional colored timing report on stderr with `--color` (`auto`, `always`,
+  `never`, `ansi`, `truecolor`), `--no-color`, and `--color-scheme`
+  (`default`, `bright`).
+- Environment overrides: `BTIME_COLOR`, `BTIME_COLOR_SCHEME`, plus standard
+  `NO_COLOR`, `CLICOLOR`, and `CLICOLOR_FORCE` handling.
+- Default is `--color=auto`: color when stderr is a TTY, plain when piped or
+  when `NO_COLOR` is set.
+
+### Versioning
+Lockstep workspace bump to 0.5.1 (`bdate`, `btime`, `buptime`, `bcal`,
+`bwatch`, `brightdate`).
+
 ## [0.5.0] — 2026-05-19
 
 ### Added — Bright Spacetime Standard surface

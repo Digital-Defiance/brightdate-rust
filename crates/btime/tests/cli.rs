@@ -12,7 +12,74 @@ fn version_flag() {
 
 #[test]
 fn help_flag() {
-    cmd().arg("--help").assert().success().stdout(predicate::str::contains("BrightDate"));
+    cmd()
+        .arg("--help")
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("BrightDate"))
+        .stdout(predicate::str::contains("--color"));
+}
+
+#[test]
+fn no_color_flag() {
+    let out = cmd()
+        .args(["--no-color", "true"])
+        .assert()
+        .success()
+        .get_output()
+        .stderr
+        .clone();
+    let text = String::from_utf8_lossy(&out);
+    assert!(
+        !text.contains("\x1b["),
+        "expected no ANSI codes with --no-color, but found some"
+    );
+    assert!(text.contains("real"));
+}
+
+#[test]
+fn color_always_ansi() {
+    let out = cmd()
+        .args(["--color=ansi", "true"])
+        .assert()
+        .success()
+        .get_output()
+        .stderr
+        .clone();
+    let text = String::from_utf8_lossy(&out);
+    assert!(
+        text.contains("\x1b["),
+        "expected ANSI codes with --color=ansi, got:\n{text}"
+    );
+    assert!(
+        !text.contains("38;2;"),
+        "expected ANSI 16-color codes, not truecolor, got:\n{text}"
+    );
+}
+
+#[test]
+fn color_always_truecolor() {
+    let out = cmd()
+        .args(["--color=truecolor", "true"])
+        .assert()
+        .success()
+        .get_output()
+        .stderr
+        .clone();
+    let text = String::from_utf8_lossy(&out);
+    assert!(
+        text.contains("38;2;"),
+        "expected truecolor codes with --color=truecolor, got:\n{text}"
+    );
+}
+
+#[test]
+fn invalid_color_mode() {
+    cmd()
+        .args(["--color=nope", "true"])
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("invalid color mode"));
 }
 
 #[test]
