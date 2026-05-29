@@ -8,7 +8,7 @@ type and is shared by every binary in this repository (`bdate`, `btime`,
 `buptime`, `bcal`, `bwatch`, and the FFI shim). Bumps to the `brightdate`
 crate ripple through every consumer.
 
-## [0.5.1] — 2026-05-29
+## [0.5.2] — 2026-05-29
 
 ### Added — `btime` color output
 
@@ -21,8 +21,9 @@ crate ripple through every consumer.
   when `NO_COLOR` is set.
 
 ### Versioning
-Lockstep workspace bump to 0.5.1 (`bdate`, `btime`, `buptime`, `bcal`,
-`bwatch`, `brightdate`).
+Lockstep workspace bump to 0.5.2 (`bdate`, `btime`, `buptime`, `bcal`,
+`bwatch`, `brightdate`). Published as 0.5.2 because 0.5.1 was already on
+crates.io before the color feature landed.
 
 ## [0.5.0] — 2026-05-19
 
