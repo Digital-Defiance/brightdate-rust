@@ -8,6 +8,20 @@ type and is shared by every binary in this repository (`bdate`, `btime`,
 `buptime`, `bcal`, `bwatch`, and the FFI shim). Bumps to the `brightdate`
 crate ripple through every consumer.
 
+## [0.5.4] — 2026-05-29
+
+### Fixed — `btime` as bsh builtin
+
+- Invalid `--color` / `--color-scheme` values and command spawn failures no
+  longer call `process::exit()` from library code. When `btime` runs as a bsh
+  builtin, that was terminating the entire shell instead of returning an
+  error code.
+- `--color=plain` is accepted as an alias for `never` (no ANSI output).
+
+### Versioning
+Lockstep workspace bump to 0.5.4 (`bdate`, `btime`, `buptime`, `bcal`,
+`bwatch`, `brightdate`).
+
 ## [0.5.3] — 2026-05-29
 
 ### Fixed — packaging / git tag alignment

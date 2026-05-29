@@ -181,11 +181,11 @@ pub fn parse_color_when(value: &str) -> Result<ColorWhen, String> {
     match value.to_ascii_lowercase().as_str() {
         "auto" => Ok(ColorWhen::Auto),
         "always" | "on" | "yes" => Ok(ColorWhen::Always),
-        "never" | "off" | "no" => Ok(ColorWhen::Never),
+        "never" | "off" | "no" | "plain" => Ok(ColorWhen::Never),
         "ansi" | "16" => Ok(ColorWhen::Ansi),
         "truecolor" | "24bit" | "rgb" => Ok(ColorWhen::TrueColor),
         other => Err(format!(
-            "invalid color mode '{other}' (expected auto, always, never, ansi, or truecolor)"
+            "invalid color mode '{other}' (expected auto, always, never, plain, ansi, or truecolor)"
         )),
     }
 }

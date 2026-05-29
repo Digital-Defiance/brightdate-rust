@@ -74,6 +74,22 @@ fn color_always_truecolor() {
 }
 
 #[test]
+fn color_plain_disables_ansi() {
+    let out = cmd()
+        .args(["--color=plain", "true"])
+        .assert()
+        .success()
+        .get_output()
+        .stderr
+        .clone();
+    let text = String::from_utf8_lossy(&out);
+    assert!(
+        !text.contains("\x1b["),
+        "expected no ANSI codes with --color=plain, but found some"
+    );
+}
+
+#[test]
 fn invalid_color_mode() {
     cmd()
         .args(["--color=nope", "true"])

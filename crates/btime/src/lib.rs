@@ -27,48 +27,42 @@ fn children_cpu_secs() -> Option<(f64, f64)> {
     None
 }
 
-fn parse_color_setting(value: &str, setting: &str) -> ColorWhen {
-    match parse_color_when(value) {
-        Ok(when) => when,
-        Err(e) => {
-            eprintln!("btime: {e}");
-            eprintln!("btime: try `btime --help` for valid {setting} values");
-            process::exit(2);
-        }
-    }
+fn parse_color_setting(value: &str, setting: &str) -> Result<ColorWhen, i32> {
+    parse_color_when(value).map_err(|e| {
+        eprintln!("btime: {e}");
+        eprintln!("btime: try `btime --help` for valid {setting} values");
+        2
+    })
 }
 
-fn parse_scheme_setting(value: &str) -> ColorScheme {
-    match parse_color_scheme(value) {
-        Ok(scheme) => scheme,
-        Err(e) => {
-            eprintln!("btime: {e}");
-            eprintln!("btime: try `btime --help` for valid --color-scheme values");
-            process::exit(2);
-        }
-    }
+fn parse_scheme_setting(value: &str) -> Result<ColorScheme, i32> {
+    parse_color_scheme(value).map_err(|e| {
+        eprintln!("btime: {e}");
+        eprintln!("btime: try `btime --help` for valid --color-scheme values");
+        2
+    })
 }
 
-fn resolve_color_settings(matches: &clap::ArgMatches) -> Colors {
+fn resolve_color_settings(matches: &clap::ArgMatches) -> Result<Colors, i32> {
     let color_when = if matches.get_flag("no_color") {
         ColorWhen::Never
     } else if let Some(value) = matches.get_one::<String>("color") {
-        parse_color_setting(value, "--color values")
+        parse_color_setting(value, "--color values")?
     } else if let Ok(value) = std::env::var("BTIME_COLOR") {
-        parse_color_setting(&value, "BTIME_COLOR values")
+        parse_color_setting(&value, "BTIME_COLOR values")?
     } else {
         ColorWhen::Auto
     };
 
     let scheme = if let Some(value) = matches.get_one::<String>("color_scheme") {
-        parse_scheme_setting(value)
+        parse_scheme_setting(value)?
     } else if let Ok(value) = std::env::var("BTIME_COLOR_SCHEME") {
-        parse_scheme_setting(&value)
+        parse_scheme_setting(&value)?
     } else {
         ColorScheme::Default
     };
 
-    Colors::resolve(color_when, scheme)
+    Ok(Colors::resolve(color_when, scheme))
 }
 
 pub fn run(args: &[String]) -> i32 {
@@ -86,7 +80,7 @@ pub fn run(args: &[String]) -> i32 {
                 .value_name("WHEN")
                 .num_args(0..=1)
                 .default_missing_value("always")
-                .help("Colorize timing output: auto, always, never, ansi, or truecolor")
+                .help("Colorize timing output: auto, always, never, plain, ansi, or truecolor")
                 .action(ArgAction::Set),
         )
         .arg(
@@ -119,7 +113,10 @@ pub fn run(args: &[String]) -> i32 {
         }
     };
 
-    let colors = resolve_color_settings(&matches);
+    let colors = match resolve_color_settings(&matches) {
+        Ok(colors) => colors,
+        Err(code) => return code,
+    };
 
     let cmd_args: Vec<&str> = matches
         .get_many::<String>("command")
@@ -131,13 +128,16 @@ pub fn run(args: &[String]) -> i32 {
     let start = Instant::now();
     let start_bd = BrightDate::now();
 
-    let status = process::Command::new(cmd_args[0])
+    let status = match process::Command::new(cmd_args[0])
         .args(&cmd_args[1..])
         .status()
-        .unwrap_or_else(|e| {
+    {
+        Ok(status) => status,
+        Err(e) => {
             eprintln!("btime: failed to run '{}': {}", cmd_args[0], e);
-            process::exit(1);
-        });
+            return 1;
+        }
+    };
 
     let elapsed_secs = start.elapsed().as_secs_f64();
     let elapsed_days = elapsed_secs / 86_400.0;
