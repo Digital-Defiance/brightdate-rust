@@ -17,7 +17,194 @@ fn help_flag() {
         .assert()
         .success()
         .stdout(predicate::str::contains("BrightDate"))
-        .stdout(predicate::str::contains("--color"));
+        .stdout(predicate::str::contains("--color"))
+        .stdout(predicate::str::contains("--format"))
+        .stdout(predicate::str::contains("--portability"))
+        .stdout(predicate::str::contains("--verbose"));
+}
+
+#[test]
+fn gnu_portability_output() {
+    cmd()
+        .args(["-p", "true"])
+        .assert()
+        .success()
+        .stderr(predicate::str::contains("real "))
+        .stderr(predicate::str::contains("user "))
+        .stderr(predicate::str::contains("sys "));
+}
+
+#[test]
+fn gnu_custom_format() {
+    cmd()
+        .args(["-f", "elapsed=%e cpu=%P", "true"])
+        .assert()
+        .success()
+        .stderr(predicate::str::contains("elapsed="))
+        .stderr(predicate::str::contains("cpu="));
+}
+
+#[test]
+fn gnu_verbose_output() {
+    cmd()
+        .args(["-v", "true"])
+        .assert()
+        .success()
+        .stderr(predicate::str::contains("Command being timed"))
+        .stderr(predicate::str::contains("User time (seconds)"));
+}
+
+#[test]
+fn gnu_quiet_suppresses_nonzero_message() {
+    let out = cmd()
+        .args(["-q", "false"])
+        .assert()
+        .failure()
+        .get_output()
+        .stderr
+        .clone();
+    let text = String::from_utf8_lossy(&out);
+    assert!(
+        !text.contains("non-zero status"),
+        "expected -q to suppress abnormal exit message, got:\n{text}"
+    );
+}
+
+#[test]
+fn gnu_time_env_format() {
+    cmd()
+        .env("TIME", "fmt=%e")
+        .args(["true"])
+        .assert()
+        .success()
+        .stderr(predicate::str::contains("fmt="));
+}
+
+#[test]
+fn gnu_portability_has_no_brightdate_fields() {
+    cmd()
+        .args(["-p", "true"])
+        .assert()
+        .success()
+        .stderr(predicate::str::contains("real "))
+        .stderr(predicate::str::is_empty().not())
+        .stderr(predicate::str::contains("millidays").not())
+        .stderr(predicate::str::contains("start").not());
+}
+
+#[test]
+fn gnu_verbose_overrides_format() {
+    cmd()
+        .args(["-v", "-f", "ignored=%e", "true"])
+        .assert()
+        .success()
+        .stderr(predicate::str::contains("Command being timed"))
+        .stderr(predicate::str::contains("ignored=").not());
+}
+
+#[test]
+fn gnu_abnormal_exit_message_without_quiet() {
+    let out = cmd()
+        .args(["-f", "%x", "false"])
+        .assert()
+        .failure()
+        .get_output()
+        .stderr
+        .clone();
+    let text = String::from_utf8_lossy(&out);
+    assert!(
+        text.contains("non-zero status 1"),
+        "expected abnormal exit message without -q, got:\n{text}"
+    );
+}
+
+#[test]
+fn gnu_format_command_specifier() {
+    cmd()
+        .args(["-f", "ran %C", "echo", "x"])
+        .assert()
+        .success()
+        .stderr(predicate::str::contains("ran echo x"));
+}
+
+#[test]
+fn gnu_format_brightdate_extensions_cli() {
+    cmd()
+        .args(["-f", "bd=%B", "true"])
+        .assert()
+        .success()
+        .stderr(predicate::str::contains("bd="));
+}
+
+#[test]
+fn gnu_color_disabled_in_portability_mode() {
+    let out = cmd()
+        .args(["-p", "--color=always", "true"])
+        .assert()
+        .success()
+        .get_output()
+        .stderr
+        .clone();
+    let text = String::from_utf8_lossy(&out);
+    assert!(
+        !text.contains("\x1b["),
+        "GNU -p output should not be colorized, got:\n{text}"
+    );
+}
+
+#[test]
+fn gnu_output_to_file() {
+    let path = std::env::temp_dir().join(format!("btime-o-{}.txt", std::process::id()));
+    let _ = std::fs::remove_file(&path);
+
+    cmd()
+        .args(["-p", "-o"])
+        .arg(&path)
+        .arg("true")
+        .assert()
+        .success()
+        .stderr(predicate::str::is_empty());
+
+    let text = std::fs::read_to_string(&path).expect("output file should exist");
+    assert!(text.contains("real "));
+    assert!(text.contains("user "));
+    assert!(text.contains("sys "));
+
+    let _ = std::fs::remove_file(&path);
+}
+
+#[test]
+fn gnu_output_append_to_file() {
+    let path = std::env::temp_dir().join(format!("btime-a-{}.txt", std::process::id()));
+    let _ = std::fs::remove_file(&path);
+
+    cmd()
+        .args(["-f", "line=%e", "-o"])
+        .arg(&path)
+        .arg("true")
+        .assert()
+        .success();
+
+    cmd()
+        .args(["-f", "line=%e", "-a", "-o"])
+        .arg(&path)
+        .arg("true")
+        .assert()
+        .success();
+
+    let text = std::fs::read_to_string(&path).expect("output file should exist");
+    assert_eq!(text.matches("line=").count(), 2, "expected two appended lines:\n{text}");
+
+    let _ = std::fs::remove_file(&path);
+}
+
+#[test]
+fn gnu_long_format_option() {
+    cmd()
+        .args(["--format=wall=%e", "true"])
+        .assert()
+        .success()
+        .stderr(predicate::str::contains("wall="));
 }
 
 #[test]

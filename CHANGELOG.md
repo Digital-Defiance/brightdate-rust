@@ -8,6 +8,23 @@ type and is shared by every binary in this repository (`bdate`, `btime`,
 `buptime`, `bcal`, `bwatch`, and the FFI shim). Bumps to the `brightdate`
 crate ripple through every consumer.
 
+## [0.5.5] — 2026-05-29
+
+### Added — `btime` GNU time compatibility
+
+- GNU time 1.10-style flags: `-f`/`--format`, `-p`/`--portability`, `-v`/`--verbose`,
+  `-o`/`--output`, `-a`/`--append`, `-q`/`--quiet`, and `TIME` environment variable.
+- Full GNU `%` format specifier support plus BrightDate extensions (`%B`, `%b`, `%N`, `%n`).
+- Fork/waitpid/`getrusage(RUSAGE_CHILDREN)` measurement matching GNU time behavior.
+- BrightDate colored report remains the default when no GNU output mode is selected.
+
+### Tests
+- 48 `btime` tests covering format specifiers, GNU CLI flags, color modes, and file output.
+
+### Versioning
+Lockstep workspace bump to 0.5.5 (`bdate`, `btime`, `buptime`, `bcal`, `bwatch`,
+`brightdate`).
+
 ## [0.5.4] — 2026-05-29
 
 ### Fixed — `btime` as bsh builtin
