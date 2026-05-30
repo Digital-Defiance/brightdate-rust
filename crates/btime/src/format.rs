@@ -128,7 +128,18 @@ pub fn summarize(out: &mut dyn Write, fmt: &str, result: &TimingResult) -> io::R
                     "{}",
                     format_time_pair(result.ru.utime_sec, result.ru.utime_usec)
                 )?,
-                Some('W') => write!(out, "{}", result.ru.nswap)?,
+                Some('W') => match chars.peek().copied() {
+                    // bfind-compatible BrightDate wall-clock timestamps (%.9f)
+                    Some('t') => {
+                        chars.next();
+                        write!(out, "{:.9}", result.end_bd)?;
+                    }
+                    Some('s') => {
+                        chars.next();
+                        write!(out, "{:.9}", result.start_bd)?;
+                    }
+                    _ => write!(out, "{}", result.ru.nswap)?,
+                },
                 Some('X') => {
                     write!(out, "{}", avg_mem_kb(&result.ru, |ru| ru.ixrss, cpu_ms))?;
                 }
@@ -447,11 +458,28 @@ mod tests {
     #[test]
     fn brightdate_extensions() {
         let mut buf = Vec::new();
-        summarize(&mut buf, "bd=%B md=%b start=%N end=%n", &sample_result()).unwrap();
+        summarize(
+            &mut buf,
+            "bd=%B md=%b start=%N end=%n Wt=%Wt Ws=%Ws",
+            &sample_result(),
+        )
+        .unwrap();
         let text = String::from_utf8(buf).unwrap();
         assert!(text.contains("bd=0.000005787"));
         assert!(text.contains("md=0.005787"));
         assert!(text.contains("start=9645.000000000"));
         assert!(text.contains("end=9645.000010000"));
+        assert!(text.contains("Wt=9645.000010000"));
+        assert!(text.contains("Ws=9645.000000000"));
+    }
+
+    #[test]
+    fn gnu_w_swaps_without_brightdate_suffix() {
+        let mut result = sample_result();
+        result.ru.nswap = 7;
+        let mut buf = Vec::new();
+        summarize(&mut buf, "swaps=%W", &result).unwrap();
+        let text = String::from_utf8(buf).unwrap();
+        assert!(text.contains("swaps=7"));
     }
 }

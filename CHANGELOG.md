@@ -8,6 +8,18 @@ type and is shared by every binary in this repository (`bdate`, `btime`,
 `buptime`, `bcal`, `bwatch`, and the FFI shim). Bumps to the `brightdate`
 crate ripple through every consumer.
 
+## [0.5.6] — 2026-05-30
+
+### Added — `btime` bfind-compatible `%W` format
+
+- `%Wt` — end BrightDate (command completion wall time, 9 decimal places)
+- `%Ws` — start BrightDate (timing start wall time, 9 decimal places)
+- GNU `%W` (swap count) unchanged when not followed by `t` or `s`
+
+### Versioning
+Lockstep workspace bump to 0.5.6 (`bdate`, `btime`, `buptime`, `bcal`, `bwatch`,
+`brightdate`).
+
 ## [0.5.5] — 2026-05-29
 
 ### Added — `btime` GNU time compatibility

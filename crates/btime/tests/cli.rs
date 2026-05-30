@@ -137,6 +137,22 @@ fn gnu_format_brightdate_extensions_cli() {
 }
 
 #[test]
+fn gnu_format_bfind_wt_specifier() {
+    cmd()
+        .args(["-f", "%Wt %C", "true"])
+        .assert()
+        .success()
+        .stderr(predicate::str::contains("true").and(
+            predicate::function(|out: &str| {
+                out.split_whitespace()
+                    .next()
+                    .and_then(|first| first.parse::<f64>().ok())
+                    .is_some_and(|bd| bd > 9000.0)
+            }),
+        ));
+}
+
+#[test]
 fn gnu_color_disabled_in_portability_mode() {
     let out = cmd()
         .args(["-p", "--color=always", "true"])
