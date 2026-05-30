@@ -93,7 +93,7 @@ checksum = "c08606f8c3cbf4ce6ec8e28fb0014a2c086708fe954eaa885384a6165172e7e8"
 
 [[package]]
 name = "bcal"
-version = "0.5.5"
+version = "0.5.7"
 dependencies = [
  "assert_cmd",
  "brightdate",
@@ -104,7 +104,7 @@ dependencies = [
 
 [[package]]
 name = "bdate"
-version = "0.5.5"
+version = "0.5.7"
 dependencies = [
  "assert_cmd",
  "brightdate",
@@ -115,7 +115,7 @@ dependencies = [
 
 [[package]]
 name = "brightdate"
-version = "0.5.5"
+version = "0.5.7"
 dependencies = [
  "chrono",
  "serde",
@@ -125,7 +125,7 @@ dependencies = [
 
 [[package]]
 name = "brightdate-ffi"
-version = "0.5.5"
+version = "0.5.7"
 dependencies = [
  "bcal",
  "bdate",
@@ -148,7 +148,7 @@ dependencies = [
 
 [[package]]
 name = "btime"
-version = "0.5.5"
+version = "0.5.7"
 dependencies = [
  "assert_cmd",
  "bdate",
@@ -166,7 +166,7 @@ checksum = "5d20789868f4b01b2f2caec9f5c4e0213b41e3e5702a50157d699ae31ced2fcb"
 
 [[package]]
 name = "buptime"
-version = "0.5.5"
+version = "0.5.7"
 dependencies = [
  "assert_cmd",
  "brightdate",
@@ -177,7 +177,7 @@ dependencies = [
 
 [[package]]
 name = "bwatch"
-version = "0.5.5"
+version = "0.5.7"
 dependencies = [
  "assert_cmd",
  "brightdate",

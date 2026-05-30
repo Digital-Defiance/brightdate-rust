@@ -189,6 +189,16 @@ yarn dev
 
 ---
 
+## Format characters
+
+BrightDate `%` extensions (`%Wt`, `%Ws`, `%dE`, …) are documented in
+[`FORMAT-SPEC.md`](FORMAT-SPEC.md). The `%W*` family matches
+[bright-findutils](https://findutils.digitaldefiance.org) `bfind -printf`;
+`btime -f` adds timing-only letters and `%d*` milliday durations aligned with
+BSH `TIMEFMT`.
+
+---
+
 ## License
 
 MIT © Digital Defiance

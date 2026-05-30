@@ -8,6 +8,17 @@ type and is shared by every binary in this repository (`bdate`, `btime`,
 `buptime`, `bcal`, `bwatch`, and the FFI shim). Bumps to the `brightdate`
 crate ripple through every consumer.
 
+## [0.5.7] — 2026-05-30
+
+### Added — canonical BrightDate format spec
+
+- [`FORMAT-SPEC.md`](FORMAT-SPEC.md) — cross-ecosystem reference for `%W*`, `%d*`, and timing extensions.
+- `btime -f` adds `%dE`, `%dU`, `%dS` milliday specifiers matching BSH default `TIMEFMT` output (`%.6f md`).
+
+### Versioning
+Lockstep workspace bump to 0.5.7 (`bdate`, `btime`, `buptime`, `bcal`, `bwatch`,
+`brightdate`).
+
 ## [0.5.6] — 2026-05-30
 
 ### Added — `btime` bfind-compatible `%W` format

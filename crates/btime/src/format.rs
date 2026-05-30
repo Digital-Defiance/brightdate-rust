@@ -145,6 +145,13 @@ pub fn summarize(out: &mut dyn Write, fmt: &str, result: &TimingResult) -> io::R
                 }
                 Some('Z') => write!(out, "{}", page_size())?,
                 Some('c') => write!(out, "{}", result.ru.nivcsw)?,
+                Some('d') => match chars.next() {
+                    Some('E') => write!(out, "{:.6} md", result.elapsed_secs() / 86.4)?,
+                    Some('U') => write!(out, "{:.6} md", result.user_secs() / 86.4)?,
+                    Some('S') => write!(out, "{:.6} md", result.sys_secs() / 86.4)?,
+                    Some('\0') | None => out.write_all(b"d")?,
+                    Some(other) => write!(out, "d?={other}")?,
+                },
                 Some('e') => write!(out, "{}", format_elapsed_seconds(elapsed))?,
                 Some('k') => write!(out, "{}", result.ru.nsignals)?,
                 Some('p') => {
@@ -453,6 +460,21 @@ mod tests {
         summarize(&mut buf, "100%% done\\t!", &sample_result()).unwrap();
         let text = String::from_utf8(buf).unwrap();
         assert!(text.starts_with("100% done\t!"));
+    }
+
+    #[test]
+    fn timfmt_milliday_specifiers() {
+        let mut buf = Vec::new();
+        summarize(
+            &mut buf,
+            "E=%dE U=%dU S=%dS",
+            &sample_result(),
+        )
+        .unwrap();
+        let text = String::from_utf8(buf).unwrap();
+        assert!(text.contains("E=0.005787 md"));
+        assert!(text.contains("U=0.000116 md"));
+        assert!(text.contains("S=0.000231 md"));
     }
 
     #[test]

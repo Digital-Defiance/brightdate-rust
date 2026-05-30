@@ -128,6 +128,20 @@ fn gnu_format_command_specifier() {
 }
 
 #[test]
+fn gnu_format_timfmt_milliday_specifiers() {
+    cmd()
+        .args(["-f", "real=%dE user=%dU sys=%dS", "true"])
+        .assert()
+        .success()
+        .stderr(
+            predicate::str::contains("real=")
+                .and(predicate::str::contains(" md"))
+                .and(predicate::str::contains("user="))
+                .and(predicate::str::contains("sys=")),
+        );
+}
+
+#[test]
 fn gnu_format_brightdate_extensions_cli() {
     cmd()
         .args(["-f", "bd=%B", "true"])
