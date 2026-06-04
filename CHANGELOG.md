@@ -8,6 +8,10 @@ type and is shared by every binary in this repository (`bdate`, `btime`,
 `buptime`, `bcal`, `bwatch`, and the FFI shim). Bumps to the `brightdate`
 crate ripple through every consumer.
 
+## [0.5.8] - 2026-06-04
+
+- BrightDate v2, BrightAtto
+
 ## [0.5.7] — 2026-05-30
 
 ### Added — canonical BrightDate format spec

@@ -3,11 +3,10 @@ mod format;
 mod output;
 mod timing;
 
-use bdate;
 use clap::{Arg, ArgAction, Command};
 use color::{parse_color_scheme, parse_color_when, ColorScheme, ColorWhen, Colors};
 use format::{print_abnormal_termination, summarize, DEFAULT_FORMAT, POSIX_FORMAT, VERBOSE_FORMAT};
-use output::print_timing_report;
+use output::{print_timing_report, TimingReport};
 use std::fs::OpenOptions;
 use std::io::{self, Write};
 use timing::{run_command, wait_status_to_exit_code, TimingResult};
@@ -165,13 +164,15 @@ fn emit_report(
             if is_stderr(out) && colors.enabled() {
                 print_timing_report(
                     colors,
-                    result.elapsed_secs(),
-                    result.elapsed_days(),
-                    Some(result.user_secs()),
-                    Some(result.sys_secs()),
-                    result.cpu_percent_gnu().map(|p| p as f64),
-                    result.start_bd,
-                    result.end_bd,
+                    &TimingReport {
+                        elapsed_secs: result.elapsed_secs(),
+                        elapsed_days: result.elapsed_days(),
+                        user: Some(result.user_secs()),
+                        sys: Some(result.sys_secs()),
+                        cpu_pct: result.cpu_percent_gnu().map(|p| p as f64),
+                        start_bd: result.start_bd,
+                        end_bd: result.end_bd,
+                    },
                 );
                 Ok(())
             } else {

@@ -2,7 +2,11 @@
 
 > *Named in homage to Star Trek's Stardate — one universal scalar to rule them all.*
 
-This workspace contains the BrightDate v1.0 libraries: a scientifically grounded, timezone-free decimal day representation anchored at **J2000.0** via a **TAI substrate**.
+This workspace contains the BrightDate libraries: a scientifically grounded,
+timezone-free decimal day representation anchored at **J2000.0** via a **TAI
+substrate**. The v1 **`f64` decimal-day** value remains the ergonomic dashboard;
+the v2 **canonical engine** stores **attoseconds since J2000.0** and derives
+decimal days through an integer **lens** (Euclidean divmod).
 
 ---
 
@@ -10,12 +14,13 @@ This workspace contains the BrightDate v1.0 libraries: a scientifically grounded
 
 | Crate | Path | Description |
 |-------|------|-------------|
-| `brightdate` | `brightdate/` (Rust) | Core BrightDate type, TAI conversions, leap second table |
-| `bdate` | `bdate/` | Date formatting and calendar utilities |
-| `btime` | `btime/` | Time-of-day utilities |
-| `buptime` | `buptime/` | Process uptime tracking |
-| `bcal` | `bcal/` | Calendar arithmetic |
-| `bwatch` | `bwatch/` | Stopwatch / interval utilities |
+| `brightdate` | `crates/brightdate/` | Core types, TAI conversions, leap second table, v2 attosecond engine |
+| `bdate` | `crates/bdate/` | Date formatting and calendar utilities |
+| `btime` | `crates/btime/` | Time-of-day utilities |
+| `buptime` | `crates/buptime/` | Process uptime tracking |
+| `bcal` | `crates/bcal/` | Calendar arithmetic |
+| `bwatch` | `crates/bwatch/` | Stopwatch / interval utilities |
+| `brightdate-ffi` | `crates/brightdate-ffi/` | C FFI shim for the Rust library |
 
 ## TypeScript library
 
@@ -79,29 +84,74 @@ BrightDate ticks in exact SI seconds. Leap seconds exist only at UTC boundary co
 
 ## Companion Types
 
-BrightDate ships in three flavors so you can pick the right trade-off between ergonomics and precision. All three anchor on the same J2000.0 / TAI substrate — they only differ in how the value is stored.
+Pick the representation that matches your boundary: **store** in an exact integer
+engine, **compute** in `BrightDate` when `f64` is enough, **label** with `BD` /
+`PBD`. All types share the same J2000.0 / TAI semantics; they differ only in
+storage and how decimal days are produced.
 
-| Type | Representation | Precision | Range | Use when… |
-|------|----------------|-----------|-------|-----------|
-| **`BrightDate`** | `f64` decimal days since J2000.0 | ~190 ns in the current era; widens with magnitude | ±287,000 years from J2000 | The 99% case — math, astronomy, scheduling, logging, display. Sorts, diffs, and serializes natively. |
-| **`BrightInstant`** | `i64` TAI seconds + `u32` nanos since J2000.0 | **1 ns exactly, everywhere** | Effectively unlimited | You need nanosecond precision at any magnitude — distributed systems, GPS engineering, interplanetary mission timing. The rigorous companion to `BrightDate`. |
-| **`ExactBrightDate`** | `i128` picoseconds since J2000.0 (Rust) / `BigInt` picoseconds (TypeScript) | **1 ps exactly, everywhere** | Effectively unlimited | You must round-trip arbitrary Unix milliseconds bit-for-bit — blockchain consensus, archival storage, byte-identical reconstruction. |
+| Type | Role | Representation | Use when… |
+|------|------|----------------|-----------|
+| **`ExactBrightAtto`** | **v2 canonical engine** | `i128` attoseconds since J2000.0 (`EBA1:` wire, 16-byte BE) | Default for new storage, spacetime intervals, and anything that must not accumulate `f64` error. One attosecond ≡ one **light-attosecond** under Bright Spacetime `c = 1`. |
+| **`ExactBrightDate`** | Picosecond engine | `i128` picoseconds since J2000.0 (`EBD1:`) | You want picosecond ticks without attosecond width; converts to/from `ExactBrightAtto` exactly. |
+| **`BrightDate`** | **v1 dashboard** | `f64` decimal days since J2000.0 | Math, logging, UI, sorting — the ergonomic scalar. Derived from integer ticks via the **lens** (lossy only in the final `f64` combine). |
+| **`BrightInstant`** | Civil instant | `i64` TAI seconds + `u32` nanos since J2000.0 | Nanosecond-precision instants at any magnitude (GPS, distributed clocks). |
 
-**Rust** and **TypeScript** both ship all three companion types, plus the `BD` / `PBD` display-label convention for rendering signed scalars (negatives appear as `PBD <abs>` so user-facing strings never carry a leading minus). You can convert freely between the three storage types: store in the exact form at storage boundaries, compute in `BrightDate` for speed and convenience.
+### Integer lens (engine ↔ decimal days)
+
+Canonical ticks use Euclidean divmod; decimal days are a **presentation lens**:
+
+```text
+bd = days + rem / ticks_per_day     (days, rem from divmod on attoseconds or picoseconds)
+```
+
+Exported helpers: `ticks_to_brightdate`, `brightdate_to_attoseconds`,
+`brightdate_to_picoseconds`, and day constants such as `ATTOSECONDS_PER_DAY`.
+
+**Rust** and **TypeScript** both ship these types. `BrightDate::from_unix_ms` /
+`to_unix_ms` apply the leap-second table on the UTC label; `ExactBrightAtto` uses
+linear Unix-ms offset from the J2000 UTC anchor — use the engine at storage
+boundaries and the dashboard for human-facing decimal days.
+
+### Unit hierarchies (do not conflate)
+
+| Family | Examples | Meaning |
+|--------|----------|---------|
+| **Decimal day** | milliday (`md`), microday (`μd`), nanoday (`nd`) | Fractions of one **BrightDate day** (`f64` or lens-derived) |
+| **Bright time** | Bright-Second (`bs`), kilobright-second (`kbs`) | SI seconds on the Bright timeline (86400 `bs` = 1 day) |
 
 ```rust
-use brightdate::{BrightDate, BrightInstant, ExactBrightDate, format_bd};
+use brightdate::{
+    format_bd, ticks_to_brightdate, ATTOSECONDS_PER_DAY, BrightDate, BrightInstant,
+    ExactBrightAtto, ExactBrightDate,
+};
 
-let bd  = BrightDate::now();           // f64 ergonomic form
-let inst = BrightInstant::from(bd);    // exact ns-precision form
-let back: BrightDate = inst.into();    // round-trips for the f64 range
+// v1 dashboard
+let bd = BrightDate::now();
+let inst = BrightInstant::from_brightdate(bd.value).unwrap();
+let back = BrightDate::from_value(inst.to_brightdate());
 
-// Bit-exact Unix-ms storage:
-let exact = ExactBrightDate::from_unix_ms(1_700_000_000_000);
-assert_eq!(exact.to_unix_ms(), 1_700_000_000_000);
+// v2 canonical engine
+let atto = ExactBrightAtto::from_unix_ms(1_700_000_000_000);
+assert_eq!(atto.encode(), format!("EBA1:{}", atto.attoseconds()));
+assert!((atto.to_brightdate() - ticks_to_brightdate(atto.attoseconds(), ATTOSECONDS_PER_DAY)).abs() < 1e-10);
 
-// Pre-J2000.0 instants display with the PBD prefix on the absolute value.
-let pre = BrightDate::from_value(-11125.154);  // Apollo 11
+// Bridge: dashboard decimal days match the lens
+assert!((BrightDate::from_exact_bright_atto(atto).value - atto.to_brightdate()).abs() < 1e-10);
+// Whole-day attosecond ticks round-trip exactly through the f64 bridge
+let whole_day = ExactBrightAtto::from_attoseconds(ATTOSECONDS_PER_DAY);
+assert_eq!(
+    BrightDate::from_exact_bright_atto(whole_day)
+        .to_exact_bright_atto()
+        .unwrap(),
+    whole_day,
+);
+
+// Picosecond engine (optional)
+let ps = ExactBrightDate::from_unix_ms(1_700_000_000_000);
+let from_ps = ExactBrightAtto::from_exact_brightdate(ps);
+
+// Pre-J2000.0 instants: PBD display label (no leading minus in user strings)
+let pre = BrightDate::from_value(-11125.154);
 assert_eq!(format_bd(pre.value, 3).unwrap(), "PBD 11125.154");
 ```
 
@@ -145,15 +195,18 @@ After tapping you can also use the short names: `brew install bdate`, etc.
 ```toml
 # Cargo.toml
 [dependencies]
-brightdate = "0.1"
+brightdate = "0.5"
 ```
 
 ```rust
-use brightdate::BrightDate;
+use brightdate::{BrightDate, ExactBrightAtto};
 
 let now = BrightDate::now();
-println!("{:.5}", now);                  // e.g. 9603.57128
-println!("{}", now.to_iso8601());        // 2026-05-11T12:34:56.789Z
+println!("{:.5}", now);           // e.g. 9603.57128
+println!("{}", now.to_iso());     // 2026-05-11T12:34:56.789Z
+
+let exact = ExactBrightAtto::from_unix_ms(now.to_unix_ms() as i64);
+println!("{}", exact.encode());   // EBA1:… attoseconds since J2000.0
 ```
 
 See the [crates.io docs](https://docs.rs/brightdate) for the full API.

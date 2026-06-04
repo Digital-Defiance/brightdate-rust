@@ -70,18 +70,25 @@ pub const BRIGHT_METER_UNITS: &[BrightUnit] = &[
         context: "≈ 300 km (low Earth orbit)",
     },
     BrightUnit {
+        name: "Kilo-BrightMeter",
+        symbol: "kbm",
+        seconds: 1e3,
+        metres: SPEED_OF_LIGHT_M_PER_S * 1e3,
+        context: "≈ 1 AU (Earth–Sun ≈ 0.499 kbm)",
+    },
+    BrightUnit {
         name: "BrightMeter",
         symbol: "bm",
         seconds: 1.0,
         metres: SPEED_OF_LIGHT_M_PER_S,
-        context: "≈ 299_792 km (Earth–Moon ≈ 1.28 bm)",
+        context: "1 Bright (light-second); Earth–Moon ≈ 1.28 bm",
     },
     BrightUnit {
         name: "Mega-BrightMeter",
         symbol: "Mbm",
         seconds: 1e6,
         metres: SPEED_OF_LIGHT_M_PER_S * 1e6,
-        context: "≈ 2 × Earth–Sun (1 AU ≈ 0.5 Mbm)",
+        context: "≈ 2_000 AU (1 AU ≈ 0.499 Mbm)",
     },
     BrightUnit {
         name: "Giga-BrightMeter",

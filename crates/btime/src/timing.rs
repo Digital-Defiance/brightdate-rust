@@ -263,17 +263,16 @@ pub fn run_command(cmd: &[&str]) -> io::Result<TimingResult> {
 
 pub fn wait_status_to_exit_code(status: i32) -> i32 {
     #[cfg(unix)]
-    unsafe {
+    {
         if libc::WIFSTOPPED(status) {
-            return libc::WSTOPSIG(status) + 128;
+            libc::WSTOPSIG(status) + 128
+        } else if libc::WIFSIGNALED(status) {
+            libc::WTERMSIG(status) + 128
+        } else if libc::WIFEXITED(status) {
+            libc::WEXITSTATUS(status)
+        } else {
+            1
         }
-        if libc::WIFSIGNALED(status) {
-            return libc::WTERMSIG(status) + 128;
-        }
-        if libc::WIFEXITED(status) {
-            return libc::WEXITSTATUS(status);
-        }
-        return 1;
     }
     #[cfg(not(unix))]
     {
@@ -283,34 +282,32 @@ pub fn wait_status_to_exit_code(status: i32) -> i32 {
 
 #[cfg(unix)]
 pub fn wait_status_exited(status: i32) -> bool {
-    unsafe { libc::WIFEXITED(status) }
+    libc::WIFEXITED(status)
 }
 
 #[cfg(unix)]
 pub fn wait_status_exit_status(status: i32) -> i32 {
-    unsafe { libc::WEXITSTATUS(status) }
+    libc::WEXITSTATUS(status)
 }
 
 #[cfg(unix)]
 pub fn wait_status_signaled(status: i32) -> bool {
-    unsafe { libc::WIFSIGNALED(status) }
+    libc::WIFSIGNALED(status)
 }
 
 #[cfg(unix)]
 pub fn wait_status_stopped(status: i32) -> bool {
-    unsafe { libc::WIFSTOPPED(status) }
+    libc::WIFSTOPPED(status)
 }
 
 #[cfg(unix)]
 pub fn wait_status_term_signal(status: i32) -> i32 {
-    unsafe {
-        if libc::WIFSIGNALED(status) {
-            libc::WTERMSIG(status)
-        } else if libc::WIFSTOPPED(status) {
-            libc::WSTOPSIG(status)
-        } else {
-            0
-        }
+    if libc::WIFSIGNALED(status) {
+        libc::WTERMSIG(status)
+    } else if libc::WIFSTOPPED(status) {
+        libc::WSTOPSIG(status)
+    } else {
+        0
     }
 }
 

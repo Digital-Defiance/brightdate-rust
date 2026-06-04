@@ -1,59 +1,57 @@
 use crate::color::Colors;
 
-pub fn print_timing_report(
-    colors: &Colors,
-    elapsed_secs: f64,
-    elapsed_days: f64,
-    user: Option<f64>,
-    sys: Option<f64>,
-    cpu_pct: Option<f64>,
-    start_bd: f64,
-    end_bd: f64,
-) {
+/// Colored BrightDate timing report (stderr).
+pub struct TimingReport {
+    pub elapsed_secs: f64,
+    pub elapsed_days: f64,
+    pub user: Option<f64>,
+    pub sys: Option<f64>,
+    pub cpu_pct: Option<f64>,
+    pub start_bd: f64,
+    pub end_bd: f64,
+}
+
+pub fn print_timing_report(colors: &Colors, report: &TimingReport) {
     eprintln!();
     eprintln!(
-        "{} {}{:.9}{} {}{}{}  ({}{:.6} s{})",
+        "{} {}{:.9}{} {}days{}  ({}{:.6} s{})",
         colors.label("real", colors.real),
         colors.value,
-        elapsed_days,
+        report.elapsed_days,
         colors.reset,
         colors.unit,
-        "days",
         colors.reset,
         colors.value,
-        elapsed_secs,
+        report.elapsed_secs,
         colors.reset,
     );
 
     eprintln!(
-        "         {}{:.6}{} {}{}{}",
+        "         {}{:.6}{} {}millidays{}",
         colors.detail,
-        elapsed_days * 1_000.0,
+        report.elapsed_days * 1_000.0,
         colors.reset,
         colors.unit,
-        "millidays",
         colors.reset,
     );
     eprintln!(
-        "         {}{:.3}{} {}{}{}",
+        "         {}{:.3}{} {}microdays{}",
         colors.detail,
-        elapsed_days * 1_000_000.0,
+        report.elapsed_days * 1_000_000.0,
         colors.reset,
         colors.unit,
-        "microdays",
         colors.reset,
     );
     eprintln!(
-        "         {}{:.0}{} {}{}{}",
+        "         {}{:.0}{} {}nanodays{}",
         colors.detail,
-        elapsed_days * 1_000_000_000.0,
+        report.elapsed_days * 1_000_000_000.0,
         colors.reset,
         colors.unit,
-        "nanodays",
         colors.reset,
     );
 
-    if let (Some(user), Some(sys), Some(cpu_pct)) = (user, sys, cpu_pct) {
+    if let (Some(user), Some(sys), Some(cpu_pct)) = (report.user, report.sys, report.cpu_pct) {
         eprintln!(
             "{} {}{:.6} s{}  ({}{:.6} millidays{})",
             colors.label("user", colors.user),
@@ -89,14 +87,14 @@ pub fn print_timing_report(
         "{} {}{:.9}{}",
         colors.label("start", colors.stamp),
         colors.value,
-        start_bd,
+        report.start_bd,
         colors.reset,
     );
     eprintln!(
         "{} {}{:.9}{}",
         colors.label("end", colors.stamp),
         colors.value,
-        end_bd,
+        report.end_bd,
         colors.reset,
     );
 }

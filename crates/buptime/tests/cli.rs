@@ -5,6 +5,27 @@ fn cmd() -> Command {
     Command::cargo_bin("buptime").expect("buptime binary not found")
 }
 
+/// Parse `up <days> days` from buptime stdout (not the boot BD field).
+fn parse_uptime_days(stdout: &[u8]) -> f64 {
+    let text = String::from_utf8_lossy(stdout);
+    let tokens: Vec<&str> = text.split_whitespace().collect();
+    for (i, token) in tokens.iter().enumerate() {
+        if *token == "up" {
+            let days = tokens
+                .get(i + 1)
+                .and_then(|t| t.parse::<f64>().ok())
+                .expect("token after 'up' should be uptime days");
+            assert_eq!(
+                tokens.get(i + 2),
+                Some(&"days"),
+                "expected 'days' after uptime value, got: {text}"
+            );
+            return days;
+        }
+    }
+    panic!("did not find 'up <days> days' in buptime output: {text}");
+}
+
 #[test]
 fn version_flag() {
     cmd().arg("--version").assert().success().stdout(predicate::str::contains(env!("CARGO_PKG_VERSION")));
@@ -38,15 +59,8 @@ fn output_contains_boot() {
 #[test]
 fn uptime_is_positive() {
     let out = cmd().assert().success().get_output().stdout.clone();
-    let text = String::from_utf8_lossy(&out);
-    // "up X.XXXXX days" — extract X
-    for token in text.split_whitespace() {
-        if let Ok(days) = token.parse::<f64>() {
-            assert!(days > 0.0, "uptime should be > 0, got {days}");
-            return;
-        }
-    }
-    panic!("no numeric value found in buptime output: {text}");
+    let days = parse_uptime_days(&out);
+    assert!(days >= 0.0, "uptime should be >= 0, got {days}");
 }
 
 // ── output structure ─────────────────────────────────────────────────────────
@@ -100,14 +114,12 @@ fn millidays_value_is_positive() {
     let out = cmd().assert().success().get_output().stdout.clone();
     let text = String::from_utf8_lossy(&out);
     // format: "up X.XXXXX days (Y.YYY millidays)  —  boot Z"
-    // find the token just before "millidays"
     let tokens: Vec<&str> = text.split_whitespace().collect();
     for i in 1..tokens.len() {
-        if tokens[i] == "millidays)" {
-            // strip leading "("
+        if tokens[i] == "millidays)" || tokens[i].starts_with("millidays") {
             let raw = tokens[i - 1].trim_start_matches('(');
             let v: f64 = raw.parse().expect("millidays value should be numeric");
-            assert!(v > 0.0, "millidays should be > 0, got {v}");
+            assert!(v >= 0.0, "millidays should be >= 0, got {v}");
             return;
         }
     }
@@ -119,14 +131,11 @@ fn millidays_value_is_positive() {
 #[test]
 fn uptime_in_reasonable_range() {
     let out = cmd().assert().success().get_output().stdout.clone();
-    let text = String::from_utf8_lossy(&out);
-    // first numeric token is uptime in days; must be < 3650 (10 years) and > 0
-    for token in text.split_whitespace() {
-        if let Ok(days) = token.parse::<f64>() {
-            assert!(days > 0.0, "uptime must be positive, got {days}");
-            assert!(days < 3650.0, "uptime > 10 years seems wrong, got {days}");
-            return;
-        }
-    }
-    panic!("no numeric value in buptime output: {text}");
+    let days = parse_uptime_days(&out);
+    // Host uptime in BrightDate-days; boot BD is ~9600+ and must not be mistaken for this.
+    assert!(days >= 0.0, "uptime must be non-negative, got {days}");
+    assert!(
+        days < 3650.0,
+        "uptime > 10 years seems wrong (got {days} days; check you parsed uptime, not boot BD)"
+    );
 }

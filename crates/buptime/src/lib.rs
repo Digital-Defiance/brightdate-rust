@@ -76,8 +76,7 @@ pub fn run(args: &[String]) -> i32 {
 
     let uptime_s = get_uptime_seconds();
     let uptime_days = uptime_s / 86_400.0;
-    let millidays = (uptime_days * 1_000.0).floor() as u64;
-    let whole_days = (uptime_days).floor() as u64;
+    let millidays = uptime_days * 1_000.0;
 
     let boot_unix_ms = {
         let now = std::time::SystemTime::now()
@@ -89,15 +88,8 @@ pub fn run(args: &[String]) -> i32 {
 
     let boot_bd = BrightDate::from_unix_ms(boot_unix_ms).ok();
 
-    let mut parts = Vec::new();
-    if whole_days > 0 {
-        parts.push(format!("{} day{}", whole_days, if whole_days == 1 { "" } else { "s" }));
-    }
-    let hrs = ((uptime_s as u64 % 86400) / 3600) as u64;
-    let mins = ((uptime_s as u64 % 3600) / 60) as u64;
-    parts.push(format!("{:02}:{:02}", hrs, mins));
-
-    print!("up {} ({} millidays)", parts.join(", "), millidays);
+    // Leading field is fractional BrightDate-days of uptime (not boot BD).
+    print!("up {:.5} days ({:.3} millidays)", uptime_days, millidays);
     if let Some(bd) = boot_bd {
         print!("  — boot {:.5}", bd.value);
     }

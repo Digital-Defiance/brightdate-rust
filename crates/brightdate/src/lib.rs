@@ -42,6 +42,8 @@ pub mod constants;
 pub mod conversions;
 pub mod display_label;
 pub mod exact;
+pub mod exact_atto;
+pub mod lens;
 pub mod formatting;
 pub mod geodesy;
 pub mod instant;
@@ -61,6 +63,12 @@ pub use display_label::{
     BrightLabel, DEFAULT_BD_PRECISION,
 };
 pub use exact::ExactBrightDate;
+pub use exact_atto::ExactBrightAtto;
+pub use lens::{
+    brightdate_to_attoseconds, brightdate_to_picoseconds, ticks_to_brightdate,
+    ATTOSECONDS_PER_DAY, ATTOSECONDS_PER_PICOSECOND, ATTOSECONDS_PER_SECOND,
+    PICOSECONDS_PER_DAY,
+};
 pub use instant::BrightInstant;
 pub use types::{BrightDateComponents, BrightDateOptions, BrightDuration, Precision};
 
@@ -98,6 +106,16 @@ pub struct BrightDate {
 
 impl BrightDate {
     // ── Factory ───────────────────────────────────────────────────────────
+
+    /// Lossy v1 view of canonical [`ExactBrightAtto`].
+    pub fn from_exact_bright_atto(exact: ExactBrightAtto) -> Self {
+        Self::from_value(exact.to_brightdate())
+    }
+
+    /// Lossy v1 view of [`ExactBrightDate`].
+    pub fn from_exact_brightdate(exact: ExactBrightDate) -> Self {
+        Self::from_value(exact.to_brightdate())
+    }
 
     /// Create from a raw `f64` value (decimal days since J2000.0).
     pub fn from_value(value: f64) -> Self {
@@ -302,6 +320,16 @@ impl BrightDate {
     /// Round to nearest microday.
     pub fn round_to_microday(&self) -> Self {
         Self { value: round_to_microday(self.value), ..*self }
+    }
+
+    /// Lossy: canonical attosecond engine (v2).
+    pub fn to_exact_bright_atto(&self) -> Result<ExactBrightAtto, crate::types::BrightDateError> {
+        ExactBrightAtto::from_brightdate(self.value)
+    }
+
+    /// Lossy: picosecond engine.
+    pub fn to_exact_brightdate(&self) -> Result<ExactBrightDate, crate::types::BrightDateError> {
+        ExactBrightDate::from_brightdate(self.value)
     }
 
     // ── Formatting ────────────────────────────────────────────────────────

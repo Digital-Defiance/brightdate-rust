@@ -132,20 +132,19 @@ impl ExactBrightDate {
 
     /// Construct from an `f64` `BrightDate` (lossy — bounded by f64 mantissa).
     pub fn from_brightdate(bd: f64) -> Result<Self, BrightDateError> {
-        if !bd.is_finite() {
-            return Err(BrightDateError::InvalidInput(format!(
-                "expected finite BrightDate, got {bd}"
-            )));
-        }
-        // Multiply to picoseconds via integer days + fractional remainder
-        // to avoid pushing the whole product through f64 at once.
-        let days_floor = bd.floor();
-        let frac = bd - days_floor;
-        let days_i = days_floor as i128;
-        let frac_ps = (frac * PS_PER_DAY as f64).round() as i128;
         Ok(Self {
-            picoseconds: days_i * PS_PER_DAY + frac_ps,
+            picoseconds: crate::lens::brightdate_to_picoseconds(bd)?,
         })
+    }
+
+    /// Canonical v2 attosecond engine.
+    #[inline]
+    pub const fn to_exact_bright_atto(self) -> crate::ExactBrightAtto {
+        crate::ExactBrightAtto::from_exact_brightdate(self)
+    }
+
+    pub fn from_exact_bright_atto(atto: crate::ExactBrightAtto) -> Self {
+        atto.to_exact_brightdate()
     }
 
     /// J2000.0 epoch itself (`picoseconds = 0`).
@@ -187,9 +186,7 @@ impl ExactBrightDate {
     /// Convert to the `f64` `BrightDate` value (decimal days since J2000.0).
     /// Lossy for sub-microsecond detail at current-era magnitudes.
     pub fn to_brightdate(self) -> f64 {
-        let days = self.picoseconds.div_euclid(PS_PER_DAY);
-        let remainder = self.picoseconds.rem_euclid(PS_PER_DAY);
-        days as f64 + (remainder as f64 / PS_PER_DAY as f64)
+        crate::lens::ticks_to_brightdate(self.picoseconds, PS_PER_DAY)
     }
 
     /// Convert to a `chrono::DateTime<Utc>` (millisecond resolution).
